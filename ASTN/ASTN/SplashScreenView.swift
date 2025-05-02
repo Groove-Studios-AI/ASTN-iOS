@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SplashScreenView: View {
     @State private var isActive = false
@@ -13,11 +14,7 @@ struct SplashScreenView: View {
     @State private var scale: CGFloat = 0.8
     
     var body: some View {
-        if isActive {
-            // Navigate to your main onboarding/login screen after splash
-            // For now we'll just show a placeholder
-            Text("Next Screen Placeholder")
-        } else {
+        NavigationStack {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
                 
@@ -56,10 +53,11 @@ struct SplashScreenView: View {
                 
                 // Navigate to next screen after a delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    withAnimation {
-                        self.isActive = true
-                    }
+                    self.isActive = true
                 }
+            }
+            .navigationDestination(isPresented: $isActive) {
+                WelcomeScreenView()
             }
         }
     }
