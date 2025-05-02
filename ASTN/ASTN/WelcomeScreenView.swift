@@ -17,15 +17,13 @@ struct WelcomeScreenView: View {
                 VStack(spacing: 0) {
                     // Image carousel section (top 60% of screen)
                     ZStack(alignment: .bottomLeading) {
-                        // Background image with darker black/white filter
+                        // Background image with grayscale filter
                         Image("splashImg")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(maxWidth: .infinity)
                             .frame(height: UIScreen.main.bounds.height * 0.6)
-                            .colorMultiply(Color.gray.opacity(0.6))
-                            .brightness(-0.2)
-                            .contrast(1.2)
+                            .grayscale(1.0) // Apply grayscale filter
                             .clipped()
                         
                         // Darker overlay gradient
@@ -39,7 +37,7 @@ struct WelcomeScreenView: View {
                         // Main tagline
                         VStack(alignment: .center) {
                             Text("Own Your Future")
-                                .font(.system(size: 38, weight: .bold))
+                                .font(.custom("magistral", size: 28))
                                 .foregroundColor(.white)
                                 .padding(.bottom, 20)
                                 .frame(maxWidth: .infinity)
@@ -66,20 +64,24 @@ struct WelcomeScreenView: View {
                         
                         // ASTN logo and description
                         Text("ASTN")
-                            .font(.system(size: 42, weight: .bold))
+                            .font(.custom("magistral", size: 34))
                             .foregroundColor(.white)
                         
                         Text("Athlete Ownership Ecosystem")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.custom("magistral", size: 22))
                             .foregroundColor(.white)
                             .padding(.bottom, 16)
                         
+                        // Community description label with exact 18px padding from screen edges
                         Text("Join the exclusive community of athletes building wealth.")
-                            .font(.system(size: 15))
+                            .font(.custom("magistral", size: 17))
                             .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
+                            .multilineTextAlignment(.center) // Center-aligned text
                             .lineSpacing(4)
-                            .padding(.horizontal, 40)
+                            .lineLimit(nil) // Remove any line limit to ensure wrapping
+                            .fixedSize(horizontal: false, vertical: true) // Allow height to grow but constrain width
+                            .frame(maxWidth: .infinity, alignment: .center) // Ensure centered formatting
+                            .padding(.horizontal, 18) // Exactly 18px from screen edges
                         
                         Spacer()
                         
@@ -89,7 +91,7 @@ struct WelcomeScreenView: View {
                             self.isActive = true
                         }) {
                             Text("Get Started")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.custom("magistral", size: 17))
                                 .foregroundColor(.white)
                                 .frame(width: 160, height: 45)
                                 .background(brandBlue)
@@ -103,6 +105,13 @@ struct WelcomeScreenView: View {
             .navigationBarHidden(true)
             .navigationDestination(isPresented: $isActive) {
                 Text("Login Screen") // Replace with your actual login/signup view
+            }
+            .onAppear {
+                // Make sure the font is correctly loaded
+                for family in UIFont.familyNames.sorted() {
+                    let names = UIFont.fontNames(forFamilyName: family)
+                    print("Family: \(family) Font names: \(names)")
+                }
             }
         }
     }
