@@ -16,7 +16,7 @@ struct WelcomeScreenView: View {
                 
                 VStack(spacing: 0) {
                     // Image carousel section (top 60% of screen)
-                    ZStack(alignment: .bottomLeading) {
+                    ZStack {
                         // Background image with grayscale filter
                         Image("splashImg")
                             .resizable()
@@ -34,15 +34,17 @@ struct WelcomeScreenView: View {
                         )
                         .frame(height: UIScreen.main.bounds.height * 0.6)
                         
-                        // Main tagline
-                        VStack(alignment: .center) {
+                        // Carousel content positioned at the bottom
+                        VStack(spacing: 0) {
+                            Spacer() // Push content to bottom
+                            
+                            // Main tagline with proper spacing
                             Text("Own Your Future")
                                 .font(.custom("magistral", size: 28))
                                 .foregroundColor(.white)
-                                .padding(.bottom, 20)
-                                .frame(maxWidth: .infinity)
+                                .padding(.bottom, 18) // Exactly 18px above pagination dots
                             
-                            // Pagination dots - smaller and more subtle
+                            // Pagination dots 12px from bottom of image
                             HStack(spacing: 6) {
                                 ForEach(0..<5) { index in
                                     Circle()
@@ -50,40 +52,44 @@ struct WelcomeScreenView: View {
                                         .frame(width: 6, height: 6)
                                 }
                             }
-                            .padding(.bottom, 20)
+                            .padding(.bottom, 12) // Exactly 12px from bottom edge
                         }
-                        .padding(.bottom, 40)
-                        .padding(.horizontal, 20)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
+                    .frame(height: UIScreen.main.bounds.height * 0.6)
                     
-                    // Text content below the image
-                    VStack(spacing: 8) {
-                        Spacer()
-                        .frame(height: 40)
-                        
-                        // ASTN logo and description
+                    // Text content below the image with equal spacing
+                    VStack(spacing: 0) {
+                        // ASTN logo - 18px below carousel
                         Text("ASTN")
                             .font(.custom("magistral", size: 34))
                             .foregroundColor(.white)
+                            .padding(.top, 26) // Exactly 18px below the carousel
+                            
+                        Spacer()
+                            .frame(height: 26) // 18px spacing between ASTN and next label
                         
+                        // ASTN description
                         Text("Athlete Ownership Ecosystem")
                             .font(.custom("magistral", size: 22))
                             .foregroundColor(.white)
-                            .padding(.bottom, 16)
+                            
+                        Spacer()
+                            .frame(height: 26) // 16px spacing between description and next label
                         
-                        // Community description label with exact 18px padding from screen edges
+                        // Community description label
                         Text("Join the exclusive community of athletes building wealth.")
                             .font(.custom("magistral", size: 17))
                             .foregroundColor(.white)
-                            .multilineTextAlignment(.center) // Center-aligned text
+                            .multilineTextAlignment(.center)
                             .lineSpacing(4)
-                            .lineLimit(nil) // Remove any line limit to ensure wrapping
-                            .fixedSize(horizontal: false, vertical: true) // Allow height to grow but constrain width
-                            .frame(maxWidth: .infinity, alignment: .center) // Ensure centered formatting
-                            .padding(.horizontal, 18) // Exactly 18px from screen edges
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.horizontal, 18)
                         
                         Spacer()
+                            .frame(height: 26) // 16px spacing between community text and button
                         
                         // Get Started button - using brand blue
                         Button(action: {
@@ -95,9 +101,11 @@ struct WelcomeScreenView: View {
                                 .foregroundColor(.white)
                                 .frame(width: 160, height: 45)
                                 .background(brandBlue)
-                                .cornerRadius(22.5) // Fully rounded corners
+                                .cornerRadius(22.5)
                         }
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 25)
+                        
+                        Spacer() // Push button up and maintain bottom padding
                     }
                     .frame(maxWidth: .infinity)
                 }
