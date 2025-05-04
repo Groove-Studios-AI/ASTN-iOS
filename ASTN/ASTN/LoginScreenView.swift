@@ -240,19 +240,7 @@ struct LoginScreenView: View {
             }
             .navigationBarHidden(true)
             .navigationDestination(isPresented: $navigateToDashboard) {
-                // Placeholder Dashboard that will show we navigated there
-                ZStack {
-                    Color.fromHex("#0A0A0A").ignoresSafeArea()
-                    VStack {
-                        Text("Dashboard")
-                            .font(.custom("Magistral", size: 30))
-                            .foregroundColor(.white)
-                            .padding()
-                        Text("Coming Soon")
-                            .font(.custom("Magistral", size: 18))
-                            .foregroundColor(.white)
-                    }
-                }
+                MainTabView()
             }
             .onAppear {
                 // Print font info for debugging
