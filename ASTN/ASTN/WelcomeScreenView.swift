@@ -2,17 +2,17 @@ import SwiftUI
 
 struct WelcomeScreenView: View {
     // Define brand colors
-    private let brandBlack = Color(hex: "#0A0A0A")
-    private let brandBlue = Color(hex: "#1A2196")
+    private let brandBlack = Color.fromHex("#0A0A0A")
+    private let brandBlue = Color.fromHex("#1A2196")
     
     @State private var isActive = false
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Black background for entire screen
+                // Dark background for entire screen
                 brandBlack
-                    .edgesIgnoringSafeArea(.all)
+                    .ignoresSafeArea(.all)
                 
                 VStack(spacing: 0) {
                     // Image carousel section (top 60% of screen)
@@ -112,7 +112,7 @@ struct WelcomeScreenView: View {
             }
             .navigationBarHidden(true)
             .navigationDestination(isPresented: $isActive) {
-                Text("Login Screen") // Replace with your actual login/signup view
+                LoginScreenView() // Navigate to the login screen
             }
             .onAppear {
                 // Make sure the font is correctly loaded
