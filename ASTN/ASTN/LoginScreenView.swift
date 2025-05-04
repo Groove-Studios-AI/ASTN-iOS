@@ -194,7 +194,7 @@ struct LoginScreenView: View {
                                 // Instagram login action
                             }) {
                                 HStack {
-                                    Image("logos_instragram")
+                                    Image("logos_instagram")
                                         .resizable()
                                         .scaledToFit()
                                         .frame(width: 20, height: 20)
