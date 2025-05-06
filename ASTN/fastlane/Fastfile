@@ -1,0 +1,60 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  
+  app_store_connect_api_key(
+    key_id: "2J796L8X97",
+    issuer_id: "69a6de85-61c1-47e3-e053-5b8c7c11a4d1",
+    key_filepath: "/Users/jovialjoel/Development/HHSounds-iOS/HealingHeartSounds/AuthKey_2J796L8X97.p8",
+    duration: 1200, # optional (maximum 1200)
+    in_house: false # optional but may be required if using Apple Enterprise Account
+  )
+
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    app_identifier = "com.ASTN.mvp"
+
+    UI.message "Xcode Path: #{`xcode-select -p`.strip}"
+    UI.message "Xcode Version: #{`xcodebuild -version`.strip}"
+
+    # Skip using gym as it tries to parse the project file which causes issues with Xcode 16.3
+    # Instead, use direct shell commands to build and export the archive
+    
+    # Clean build directory
+    sh("rm -rf ../build")
+    sh("mkdir -p ../build")
+    
+    # Build archive - note we're using the parent directory and specifying the project path
+    sh("cd .. && xcodebuild -scheme ASTN -project ASTN.xcodeproj -configuration Release -archivePath build/ASTN.xcarchive archive ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon INFOPLIST_KEY_CFBundleIconName=AppIcon")
+    
+    # Export IPA
+    sh("cd .. && xcodebuild -exportArchive -archivePath build/ASTN.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build")
+    
+    # Upload to TestFlight - note the path update
+    upload_to_testflight(
+      ipa: File.expand_path("../../build/ASTN.ipa", __FILE__),
+      app_identifier: "com.ASTN.mvp",
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Running iOS tests using fastlane"
+  lane :tests do
+    scan(scheme: "ASTNTests")
+  end
+end
