@@ -1,27 +1,16 @@
 import SwiftUI
 
+/// The Dashboard Tab View that integrates with the existing tab structure
 struct DashboardTabView: View {
     var body: some View {
-        ZStack {
-            // Different background color for identification
-            Color.fromHex("#0A0A0A").ignoresSafeArea()
-            
-            VStack {
-                Text("Dashboard")
-                    .font(.custom("Magistral", size: 30))
-                    .foregroundColor(.white)
-                    .padding()
-                
-                Text("Coming Soon")
-                    .font(.custom("Magistral", size: 18))
-                    .foregroundColor(.white)
-            }
-        }
+        MainDashboardView()
     }
 }
 
+// Preview
 struct DashboardTabView_Previews: PreviewProvider {
     static var previews: some View {
         DashboardTabView()
+            .preferredColorScheme(.dark)
     }
 }

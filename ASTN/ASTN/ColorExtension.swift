@@ -26,4 +26,9 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+    
+    // Dashboard brand colors
+    static let darkBackground = Self.fromHex("#121212")
+    static let brandBlue = Self.fromHex("#1E2787")
+    static let brandPurple = Self.fromHex("#7A6BFF")
 }
