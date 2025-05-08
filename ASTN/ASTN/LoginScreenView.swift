@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct LoginScreenView: View {
     // Define brand colors
@@ -9,7 +10,6 @@ struct LoginScreenView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isPasswordVisible: Bool = false
-    @State private var navigateToDashboard: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -141,8 +141,8 @@ struct LoginScreenView: View {
                         
                         // Login Button with 51px height
                         Button(action: {
-                            // For MVP, just navigate to dashboard
-                            navigateToDashboard = true
+                            // Use AppCoordinator to replace the entire view hierarchy
+                            AppCoordinator.shared.switchToMainInterface()
                         }) {
                             Text("Login")
                                 .font(.custom("Magistral", size: 16))
@@ -239,9 +239,6 @@ struct LoginScreenView: View {
                 }
             }
             .navigationBarHidden(true)
-            .navigationDestination(isPresented: $navigateToDashboard) {
-                MainTabView()
-            }
             .onAppear {
                 // Print font info for debugging
                 for family in UIFont.familyNames.sorted() {
