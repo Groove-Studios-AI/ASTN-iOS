@@ -4,6 +4,7 @@ struct ProfileTabView: View {
     // State variables
     @State private var selectedInterests: Set<String> = ["Fitness", "Community"]
     @State private var currentTime = Date()
+    @State private var showingSettings = false
     
     // Mock data for profile
     private let userData = ProfileData(
@@ -27,55 +28,74 @@ struct ProfileTabView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            brandBackground.ignoresSafeArea()
-            
-            // Main Content
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Profile Header with image
-                    headerView
-                        .edgesIgnoringSafeArea(.top)
-                    
-                    // Content sections
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Category
-                        Text(userData.category)
-                            .font(.custom("Magistral", size: 15))
-                            .foregroundColor(.white.opacity(0.9))
-                            .padding(.bottom, 20)
+            // Main content layer
+            ZStack {
+                // Background
+                brandBackground.ignoresSafeArea()
+                
+                // Main Content
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Profile Header with image
+                        headerView
+                            .edgesIgnoringSafeArea(.top)
                         
-                        // Location Section
-                        sectionHeader("Location")
-                            .padding(.bottom, 10)
+                        // Content sections
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Category
+                            Text(userData.category)
+                                .font(.custom("Magistral", size: 15))
+                                .foregroundColor(.white.opacity(0.9))
+                                .padding(.bottom, 20)
+                            
+                            // Location Section
+                            sectionHeader("Location")
+                                .padding(.bottom, 10)
+                            
+                            locationRow
+                                .padding(.bottom, 24)
+                            
+                            // About Section
+                            sectionHeader("About")
+                                .padding(.bottom, 10)
+                            
+                            aboutContent
+                                .padding(.bottom, 24)
+                            
+                            // Interests Section
+                            sectionHeader("Interests")
+                                .padding(.bottom, 16)
+                            
+                            interestsGrid
+                                .padding(.bottom, 28)
+                            
+                            // Gallery Section
+                            gallerySection
+                        }
+                        .padding(.horizontal, 16)
                         
-                        locationRow
-                            .padding(.bottom, 24)
-                        
-                        // About Section
-                        sectionHeader("About")
-                            .padding(.bottom, 10)
-                        
-                        aboutContent
-                            .padding(.bottom, 24)
-                        
-                        // Interests Section
-                        sectionHeader("Interests")
-                            .padding(.bottom, 16)
-                        
-                        interestsGrid
-                            .padding(.bottom, 28)
-                        
-                        // Gallery Section
-                        gallerySection
+                        // Spacer for tab bar
+                        Color.clear.frame(height: 80)
                     }
-                    .padding(.horizontal, 16)
-                    
-                    // Spacer for tab bar
-                    Color.clear.frame(height: 80)
                 }
             }
+            .blur(radius: showingSettings ? 3 : 0) // Optional blur effect when settings are shown
+            
+            // Modal overlay layer
+            if showingSettings {
+                // Semi-transparent background overlay
+                Color.black.opacity(0.3)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        showingSettings = false // Dismiss when tapping outside
+                    }
+                
+                // Settings view
+                SettingsView(isPresented: $showingSettings)
+                    .transition(.scale)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: showingSettings)
     }
     
     // MARK: - Header View
@@ -100,7 +120,7 @@ struct ProfileTabView: View {
                 Spacer()
                 
                 Button(action: {
-                    // Settings action
+                    showingSettings = true
                 }) {
                     Text("Settings")
                         .font(.custom("Magistral", size: 15))
