@@ -192,29 +192,42 @@ struct ProfileTabView: View {
     
     // MARK: - Interests Grid
     private var interestsGrid: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        let horizontalPadding: CGFloat = 16 // Leading/trailing padding of parent view
+        let cellSpacing: CGFloat = 2 // Space between cells (10px as specified)
+        let availableWidth = UIScreen.main.bounds.width - (horizontalPadding * 2) - cellSpacing
+        let cellWidth = availableWidth / 2
+        
+        return VStack(alignment: .leading, spacing: 16) {
             // First row - Fitness and Community
-            HStack(spacing: 12) { // Updated spacing to 12px
+            HStack(spacing: cellSpacing) {
                 InterestTag(title: "Fitness", isSelected: true)
-                    .frame(minWidth: 140) // Set minimum width
+                    .frame(width: cellWidth)
                 InterestTag(title: "Community", isSelected: true)
-                    .frame(minWidth: 140) // Set minimum width
+                    .frame(width: cellWidth)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, horizontalPadding)
             
             // Second row - Education and Music
-            HStack(spacing: 12) { // Updated spacing to 12px
+            HStack(spacing: cellSpacing) {
                 InterestTag(title: "Education", isSelected: false)
-                    .frame(minWidth: 140) // Set minimum width
+                    .frame(width: cellWidth)
                 InterestTag(title: "Music", isSelected: false)
-                    .frame(minWidth: 140) // Set minimum width
+                    .frame(width: cellWidth)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, horizontalPadding)
             
-            // Third row - Fitness again
-            HStack(spacing: 12) { // Updated spacing to 12px
+            // Third row - Fitness again (single tag)
+            HStack(spacing: cellSpacing) {
                 InterestTag(title: "Fitness", isSelected: true)
-                    .frame(minWidth: 140) // Set minimum width
+                    .frame(width: cellWidth)
+                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, horizontalPadding)
         }
+        .padding(.horizontal, 0) // Remove any external padding from the VStack itself
     }
     
     // MARK: - Gallery Section
@@ -317,26 +330,29 @@ struct ProfileTabView: View {
         let title: String
         let isSelected: Bool
         
+        // Define the custom gold color for selected interests
+        private let selectedColor = Color(red: 232/255, green: 213/255, blue: 181/255) // #E8D5B5
+        
         var body: some View {
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(selectedColor)
                 }
                 
                 Text(title)
-                    .font(.custom("Magistral", size: 15))
-                    .foregroundColor(.white)
+                    .font(.custom("Magistral", size: 17))
+                    .foregroundColor(isSelected ? selectedColor : .white)
                     .lineLimit(1)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
-            .frame(height: 38) // Fixed height for consistency
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+            .frame(height: 48) // Taller height to match design
             .background(Color.black.opacity(0.2))
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? selectedColor : Color.white.opacity(0.3), lineWidth: 1)
             )
             .clipShape(Capsule()) // Using Capsule for more oval shape
         }
