@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileTabView: View {
     // State variables
     @State private var selectedInterests: Set<String> = ["Fitness", "Community"]
+    @State private var currentTime = Date()
     
     // Mock data for profile
     private let userData = ProfileData(
@@ -14,167 +15,73 @@ struct ProfileTabView: View {
         interests: ["Fitness", "Community", "Education", "Music"]
     )
     
+    // Time formatter for status bar
+    private let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm"
+        return formatter
+    }()
+    
     // Define brand colors
-    private let brandBlack = Color.black
     private let brandBackground = Color.black
     
     var body: some View {
         ZStack {
-            // Background color
+            // Background
             brandBackground.ignoresSafeArea()
             
             // Main Content
             ScrollView {
                 VStack(spacing: 0) {
-                    // Profile Image and Settings
-                    ProfileHeaderView()
-                        .padding(.bottom, 16)
+                    // Profile Header with image
+                    headerView
+                        .edgesIgnoringSafeArea(.top)
                     
-                    // Category
-                    Text(userData.category)
-                        .font(.custom("Magistral", size: 16))
-                        .foregroundColor(.white)
-                        .padding(.bottom, 24)
-                    
-                    // Location Section
-                    ProfileSectionView(title: "Location") {
-                        HStack {
-                            Text(userData.location)
-                                .font(.custom("Magistral", size: 16))
-                                .foregroundColor(.white.opacity(0.8))
-                            
-                            Spacer()
-                            
-                            // Distance badge
-                            HStack(spacing: 4) {
-                                Image(systemName: "location.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white)
-                                
-                                Text("\(userData.distance) mi")
-                                    .font(.custom("Magistral", size: 14))
-                                    .foregroundColor(.white)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.gray.opacity(0.3))
-                            .cornerRadius(12)
-                        }
+                    // Content sections
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Category
+                        Text(userData.category)
+                            .font(.custom("Magistral", size: 15))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(.bottom, 20)
+                        
+                        // Location Section
+                        sectionHeader("Location")
+                            .padding(.bottom, 10)
+                        
+                        locationRow
+                            .padding(.bottom, 24)
+                        
+                        // About Section
+                        sectionHeader("About")
+                            .padding(.bottom, 10)
+                        
+                        aboutContent
+                            .padding(.bottom, 24)
+                        
+                        // Interests Section
+                        sectionHeader("Interests")
+                            .padding(.bottom, 16)
+                        
+                        interestsGrid
+                            .padding(.bottom, 28)
+                        
+                        // Gallery Section
+                        gallerySection
                     }
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 16)
                     
-                    // About Section
-                    ProfileSectionView(title: "About") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(userData.about)
-                                .font(.custom("Magistral", size: 16))
-                                .foregroundColor(.white.opacity(0.8))
-                                .lineSpacing(4)
-                            
-                            Button(action: {
-                                // Action for read more
-                            }) {
-                                Text("Read more")
-                                    .font(.custom("Magistral", size: 16))
-                                    .foregroundColor(.white.opacity(0.6))
-                            }
-                        }
-                    }
-                    .padding(.bottom, 24)
-                    
-                    // Interests Section
-                    ProfileSectionView(title: "Interests") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            // First row of interests
-                            HStack(spacing: 12) {
-                                InterestTagView(title: "Fitness", isSelected: selectedInterests.contains("Fitness"))
-                                    .onTapGesture {
-                                        toggleInterest("Fitness")
-                                    }
-                                
-                                InterestTagView(title: "Community", isSelected: selectedInterests.contains("Community"))
-                                    .onTapGesture {
-                                        toggleInterest("Community")
-                                    }
-                            }
-                            
-                            // Second row of interests
-                            HStack(spacing: 12) {
-                                InterestTagView(title: "Education", isSelected: selectedInterests.contains("Education"))
-                                    .onTapGesture {
-                                        toggleInterest("Education")
-                                    }
-                                
-                                InterestTagView(title: "Music", isSelected: selectedInterests.contains("Music"))
-                                    .onTapGesture {
-                                        toggleInterest("Music")
-                                    }
-                            }
-                            
-                            // Additional interest
-                            HStack(spacing: 12) {
-                                InterestTagView(title: "Fitness", isSelected: selectedInterests.contains("Fitness"))
-                                    .onTapGesture {
-                                        toggleInterest("Fitness")
-                                    }
-                            }
-                        }
-                    }
-                    .padding(.bottom, 24)
-                    
-                    // Gallery Section
-                    ProfileSectionView(title: "Gallery", trailingItem: {
-                        Button(action: {
-                            // Action for see all
-                        }) {
-                            HStack(spacing: 4) {
-                                Text("See all")
-                                    .font(.custom("Magistral", size: 16))
-                                    .foregroundColor(.white.opacity(0.6))
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.white.opacity(0.6))
-                            }
-                        }
-                    }) {
-                        GalleryGridView()
-                    }
-                    
-                    // Additional space for tab bar
+                    // Spacer for tab bar
                     Color.clear.frame(height: 80)
                 }
-                .padding(.top, 16)
-                .padding(.horizontal, 16)
             }
         }
     }
     
-    // Method to toggle interest selection
-    private func toggleInterest(_ interest: String) {
-        if selectedInterests.contains(interest) {
-            selectedInterests.remove(interest)
-        } else {
-            selectedInterests.insert(interest)
-        }
-    }
-}
-
-// Profile data structure
-struct ProfileData {
-    let name: String
-    let category: String
-    let location: String
-    let distance: Int
-    let about: String
-    let interests: [String]
-}
-
-// Profile Header View with image and settings button
-struct ProfileHeaderView: View {
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // Profile Image
+    // MARK: - Header View
+    private var headerView: some View {
+        ZStack(alignment: .top) {
+            // Profile Image - anchored to the top edge
             Image("testUserImage")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
@@ -182,157 +89,175 @@ struct ProfileHeaderView: View {
                 .clipped()
                 .overlay(
                     LinearGradient(
-                        gradient: Gradient(colors: [.clear, .black.opacity(0.7)]),
+                        gradient: Gradient(colors: [.clear, .clear, .black.opacity(0.3), .black.opacity(0.8)]),
                         startPoint: .center,
                         endPoint: .bottom
                     )
                 )
             
             // Settings Button
-            Button(action: {
-                // Action for settings
-            }) {
-                Text("Settings")
-                    .font(.custom("Magistral", size: 16))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.5))
-                    .cornerRadius(20)
+            HStack {
+                Spacer()
+                
+                Button(action: {
+                    // Settings action
+                }) {
+                    Text("Settings")
+                        .font(.custom("Magistral", size: 15))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.4))
+                        .cornerRadius(16)
+                }
             }
-            .padding(.top, 16)
-            .padding(.trailing, 16)
+            .padding(.top, 44) // Account for status bar height
+            .padding(.horizontal, 20)
         }
     }
-}
-
-// Profile Section View
-struct ProfileSectionView<Content: View, TrailingItem: View>: View {
-    let title: String
-    let trailingItem: () -> TrailingItem
-    let content: () -> Content
     
-    init(title: String, @ViewBuilder content: @escaping () -> Content) where TrailingItem == EmptyView {
-        self.title = title
-        self.content = content
-        self.trailingItem = { EmptyView() }
+    // MARK: - Section Header
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.custom("Magistral", size: 24))
+            .fontWeight(.medium)
+            .foregroundColor(.white)
     }
     
-    init(title: String, @ViewBuilder trailingItem: @escaping () -> TrailingItem, @ViewBuilder content: @escaping () -> Content) {
-        self.title = title
-        self.trailingItem = trailingItem
-        self.content = content
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(title)
-                    .font(.custom("Magistral", size: 24))
-                    .fontWeight(.medium)
+    // MARK: - Location Row
+    private var locationRow: some View {
+        HStack {
+            Text(userData.location)
+                .font(.custom("Magistral", size: 16))
+                .foregroundColor(.white.opacity(0.8))
+                .lineLimit(1)
+            
+            Spacer()
+            
+            // Distance badge
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.up.forward")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
+                
+                Text("\(userData.distance) mi")
+                    .font(.custom("Magistral", size: 14))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.black.opacity(0.5))
+            .cornerRadius(14)
+        }
+    }
+    
+    // MARK: - About Content
+    private var aboutContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(userData.about)
+                .font(.custom("Magistral", size: 16))
+                .foregroundColor(.white.opacity(0.75))
+                .lineSpacing(3)
+            
+            Button(action: {
+                // Read more action
+            }) {
+                Text("Read more")
+                    .font(.custom("Magistral", size: 15))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .padding(.top, 2)
+        }
+    }
+    
+    // MARK: - Interests Grid
+    private var interestsGrid: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // First row - Fitness and Community
+            HStack(spacing: 12) { // Updated spacing to 12px
+                InterestTag(title: "Fitness", isSelected: true)
+                    .frame(minWidth: 140) // Set minimum width
+                InterestTag(title: "Community", isSelected: true)
+                    .frame(minWidth: 140) // Set minimum width
+            }
+            
+            // Second row - Education and Music
+            HStack(spacing: 12) { // Updated spacing to 12px
+                InterestTag(title: "Education", isSelected: false)
+                    .frame(minWidth: 140) // Set minimum width
+                InterestTag(title: "Music", isSelected: false)
+                    .frame(minWidth: 140) // Set minimum width
+            }
+            
+            // Third row - Fitness again
+            HStack(spacing: 12) { // Updated spacing to 12px
+                InterestTag(title: "Fitness", isSelected: true)
+                    .frame(minWidth: 140) // Set minimum width
+            }
+        }
+    }
+    
+    // MARK: - Gallery Section
+    private var gallerySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Gallery header with See all button
+            HStack {
+                sectionHeader("Gallery")
                 
                 Spacer()
                 
-                trailingItem()
+                Button(action: {
+                    // See all action
+                }) {
+                    HStack(spacing: 4) {
+                        Text("See all")
+                            .font(.custom("Magistral", size: 15))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
             }
+            .padding(.bottom, 12)
             
-            content()
+            // Gallery grid with just 5 images (2 on top row, 3 on bottom row)
+            photoGrid
         }
     }
-}
-
-// Interest Tag View
-struct InterestTagView: View {
-    let title: String
-    let isSelected: Bool
     
-    var body: some View {
-        HStack(spacing: 8) {
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white)
-            }
-            
-            Text(title)
-                .font(.custom("Magistral", size: 16))
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color.black.opacity(0.3))
-        .overlay(
-            RoundedRectangle(cornerRadius: 30)
-                .stroke(isSelected ? Color.white : Color.white.opacity(0.5), lineWidth: 1)
-        )
-        .cornerRadius(30)
-    }
-}
-
-// Gallery Grid View
-struct GalleryGridView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            // First row of gallery images
+    // Photo grid for gallery
+    private var photoGrid: some View {
+        VStack(spacing: 8) {
+            // First row - 2 photos
             HStack(spacing: 8) {
-                // Using the testUserImage in the gallery grid
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
+                galleryImage()
+                galleryImage()
             }
             
-            // Second row of gallery images
+            // Second row - 3 photos
             HStack(spacing: 8) {
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
+                galleryImage()
+                galleryImage()
+                galleryImage()
             }
-            
-            // Additional rows of gallery with duplicated structure to match design
-            GalleryRowWithLabel(label: "Gallery")
-            GalleryRowWithLabel(label: "Gallery")
         }
     }
-}
-
-// Gallery row with label - for the duplicated sections in the design
-struct GalleryRowWithLabel: View {
-    let label: String
     
-    var body: some View {
+    // Gallery image helper
+    private func galleryImage() -> some View {
+        Image("testUserImage")
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(height: 110)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .cornerRadius(8)
+    }
+    
+    // Gallery row with label
+    private func galleryRow(_ label: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(label)
@@ -347,37 +272,69 @@ struct GalleryRowWithLabel: View {
             }
             
             HStack(spacing: 8) {
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                
-                Image("testUserImage")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
+                galleryImage()
+                galleryImage()
+                galleryImage()
             }
         }
     }
-}
-
-// Preview
-struct ProfileTabView_Previews: PreviewProvider {
-    static var previews: some View {
-        ProfileTabView()
+    
+    // Method to toggle interest selection
+    private func toggleInterest(_ interest: String) {
+        if selectedInterests.contains(interest) {
+            selectedInterests.remove(interest)
+        } else {
+            selectedInterests.insert(interest)
+        }
     }
 }
+    
+    
+    // MARK: - Supporting Structures
+    
+    // Interest Tag Component
+    struct InterestTag: View {
+        let title: String
+        let isSelected: Bool
+        
+        var body: some View {
+            HStack(spacing: 6) {
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                Text(title)
+                    .font(.custom("Magistral", size: 15))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .frame(height: 38) // Fixed height for consistency
+            .background(Color.black.opacity(0.2))
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: 1)
+            )
+            .clipShape(Capsule()) // Using Capsule for more oval shape
+        }
+    }
+    
+    // Profile data structure
+    struct ProfileData {
+        let name: String
+        let category: String
+        let location: String
+        let distance: Int
+        let about: String
+        let interests: [String]
+    }
+    
+    // Preview
+    struct ProfileTabView_Previews: PreviewProvider {
+        static var previews: some View {
+            ProfileTabView()
+        }
+    }
