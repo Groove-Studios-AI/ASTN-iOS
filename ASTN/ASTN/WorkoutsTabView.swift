@@ -12,6 +12,10 @@ struct WorkoutItem: Identifiable {
     let bonusPoints: Int
     let durationMinutes: Int
     let startButtonColor: Color // For custom start button colors
+    
+    // Rules information
+    let howToPlay: String
+    let scoringDescription: String
 }
 
 // MARK: - Workout Card Component
@@ -201,6 +205,100 @@ struct BrandBuilderView: View {
     }
 }
 
+// MARK: - Workout Rules View
+struct WorkoutRulesView: View {
+    let workout: WorkoutItem
+    let onClose: () -> Void
+    let onStartGame: () -> Void
+    
+    // Brand gold color
+    private let brandGold = Color.fromHex("#E8D5B5")
+    
+    var body: some View {
+        ZStack {
+            // Semi-transparent background overlay
+            Color.black.opacity(0.8)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    // Dismiss when tapping outside the modal
+                    onClose()
+                }
+            
+            // Rules modal
+            VStack(alignment: .leading, spacing: 0) {
+                // Header with title and close button
+                HStack {
+                    Text(workout.title)
+                        .font(.custom("Magistral", size: 28))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(8)
+                    }
+                }
+                .padding(.bottom, 24)
+                
+                // How to Play section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("How to Play")
+                        .font(.custom("Magistral", size: 18))
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                    
+                    Text(workout.howToPlay)
+                        .font(.custom("Magistral", size: 16))
+                        .foregroundColor(.white.opacity(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.bottom, 24)
+                
+                // Scoring section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Scoring")
+                        .font(.custom("Magistral", size: 18))
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                    
+                    Text(workout.scoringDescription)
+                        .font(.custom("Magistral", size: 16))
+                        .foregroundColor(.white.opacity(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.bottom, 24)
+                
+                // Start Game button
+                Button(action: {
+                    onClose() // Close the rules view
+                    onStartGame() // Start the game
+                }) {
+                    Text("Start Game")
+                        .font(.custom("Magistral", size: 18))
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.fromHex("#1A2196")) // Blue button
+                        .cornerRadius(8)
+                }
+            }
+            .padding(24)
+            .background(Color.black)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(brandGold, lineWidth: 1)
+            )
+            .padding(.horizontal, 24)
+        }
+    }
+}
+
 // MARK: - Main WorkoutsTabView
 struct WorkoutsTabView: View {
     // Sample data - would come from your data model in production
@@ -218,7 +316,9 @@ struct WorkoutsTabView: View {
             basePoints: 10,
             bonusPoints: 5,
             durationMinutes: 5,
-            startButtonColor: Color.blue
+            startButtonColor: Color.fromHex("#1A2196"),
+            howToPlay: "Test your financial knowledge and vocabulary. Choose the correct definition for each term as quickly as you can.",
+            scoringDescription: "Earn 10 points for each correct answer plus bonus points for speed!"
         ),
         WorkoutItem(
             title: "Brand Builder",
@@ -229,7 +329,9 @@ struct WorkoutsTabView: View {
             basePoints: 10,
             bonusPoints: 5,
             durationMinutes: 5,
-            startButtonColor: Color(red: 232/255, green: 213/255, blue: 181/255) // #E8D5B5
+            startButtonColor: Color.fromHex("#E8D5B5"),
+            howToPlay: "Fill in the blanks with the correct term to complete brand-related statements.",
+            scoringDescription: "Earn 10 points for each correct answer plus bonus points for speed!"
         )
     ]
     
@@ -308,13 +410,24 @@ struct WorkoutsTabView: View {
                         .foregroundColor(.white)
                 }
             }
-            .alert(isPresented: $showingRules) {
-                Alert(
-                    title: Text(selectedWorkout?.title ?? "Workout Rules"),
-                    message: Text("Rules for \(selectedWorkout?.title ?? "this workout") would be displayed here."),
-                    dismissButton: .default(Text("Got it"))
-                )
-            }
+            .overlay(
+                ZStack {
+                    if showingRules, let workout = selectedWorkout {
+                        WorkoutRulesView(
+                            workout: workout,
+                            onClose: { showingRules = false },
+                            onStartGame: {
+                                // First close the rules panel
+                                showingRules = false
+                                // Then navigate to the appropriate workout
+                                activeWorkout = workout.title
+                            }
+                        )
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: showingRules)
+                    }
+                }
+            )
         }
     }
 }
