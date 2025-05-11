@@ -11,6 +11,7 @@ struct MainTabView: View {
             DashboardTabView()
                 .tabItem {
                     Image("dash_tabIcon")
+                        .renderingMode(.template)
                     Text("Dashboard")
                 }
                 .tag(0)
@@ -18,6 +19,7 @@ struct MainTabView: View {
             PerformanceTabView()
                 .tabItem {
                     Image("Performance_tabIcon")
+                        .renderingMode(.template)
                     Text("Performance")
                 }
                 .tag(1)
@@ -25,6 +27,7 @@ struct MainTabView: View {
             WorkoutsTabView()
                 .tabItem {
                     Image("workouts_tabIcon")
+                        .renderingMode(.template)
                     Text("Workouts")
                 }
                 .tag(2)
