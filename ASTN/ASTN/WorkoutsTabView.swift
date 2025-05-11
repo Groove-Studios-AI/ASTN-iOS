@@ -143,32 +143,11 @@ struct SpeedStreakView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                Text("Speed Streak Workout")
-                    .font(.custom("Magistral", size: 24))
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("Workout content will go here")
-                    .font(.custom("Magistral", size: 18))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Text("Back to Workouts")
-                        .font(.custom("Magistral", size: 16))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.fromHex("#1A2196"))
-                        .cornerRadius(8)
-                }
-            }
-        }
-        .navigationBarTitle("Speed Streak", displayMode: .inline)
+        // We're going to use the SpeedStreakGameView directly
+        // which contains all game logic and UI
+        SpeedStreakGameView()
+            .navigationBarTitle("Speed Streak", displayMode: .inline)
+            .navigationBarBackButtonHidden(true)
     }
 }
 
