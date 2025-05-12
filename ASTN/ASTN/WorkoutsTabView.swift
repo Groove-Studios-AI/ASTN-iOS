@@ -56,8 +56,10 @@ struct WorkoutCard: View {
                         .frame(width: 70, height: 70)
                     
                     if workout.title == "Speed Streak" {
-                        Image(systemName: workout.icon)
-                            .font(.system(size: 30))
+                        Image("rocket")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                             .foregroundColor(.white)
                     } else if let grade = workout.gradeLevel {
                         Text(grade)
