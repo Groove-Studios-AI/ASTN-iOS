@@ -521,11 +521,13 @@ struct SignupScreenView: View {
         // Show loading state
         isLoading = true
         
+        // Get access to UserSession
+        let userSession = UserSession.shared
+        
         // Simulate network delay - in a real app, this would be an API call
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             // This is where you would implement actual signup logic
             // For now, we'll simulate a successful signup for the demo
-            // In a real implementation, you would handle success and failure cases
             
             if email.lowercased() == "taken@example.com" {
                 // Simulate an authentication error
@@ -533,9 +535,29 @@ struct SignupScreenView: View {
                 authErrorMessage = "This email is already registered. Please use a different email or login."
                 isLoading = false
             } else {
-                // Success case - proceed to onboarding flow
-                isLoading = false
-                AppCoordinator.shared.switchToOnboardingFlow()
+                // Create a new user object
+                let userId = UUID().uuidString
+                
+                // Register the user with UserSession
+                userSession.registerUser(email: email, password: password) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success(let user):
+                            // User successfully registered and stored in UserSession
+                            print("User registered: \(user.id)")
+                            
+                            // Success case - proceed to onboarding flow
+                            self.isLoading = false
+                            AppCoordinator.shared.switchToOnboardingFlow()
+                            
+                        case .failure(let error):
+                            // Handle registration error
+                            self.showAuthError = true
+                            self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
+                            self.isLoading = false
+                        }
+                    }
+                }
             }
         }
     }
