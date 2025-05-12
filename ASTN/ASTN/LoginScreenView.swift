@@ -1,15 +1,39 @@
 import SwiftUI
 import UIKit
+import Combine
 
 struct LoginScreenView: View {
     // Define brand colors
     private let brandBlack = Color.fromHex("#0A0A0A")
     private let brandBlue = Color.fromHex("#1A2196")
+    private let errorRed = Color.red.opacity(0.8)
     
     // State variables for form fields
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isPasswordVisible: Bool = false
+    
+    // Validation states
+    @State private var emailError: String? = nil
+    @State private var passwordError: String? = nil
+    @State private var showAuthError: Bool = false
+    @State private var authErrorMessage: String = ""
+    @State private var isLoading: Bool = false
+    
+    // Computed properties for validation
+    private var isEmailValid: Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private var isPasswordValid: Bool {
+        return password.count >= 6
+    }
+    
+    private var isFormValid: Bool {
+        return isEmailValid && isPasswordValid
+    }
     
     var body: some View {
         NavigationStack {
@@ -49,8 +73,11 @@ struct LoginScreenView: View {
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        .stroke(emailError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
                                 )
+                                .onChange(of: email) { _ in 
+                                    validateEmail()
+                                }
                                 .placeholder(when: email.isEmpty) {
                                     Text("Enter Your Email")
                                         .font(.custom("Magistral", size: 14))
@@ -58,7 +85,18 @@ struct LoginScreenView: View {
                                         .padding(.leading, 16)
                                 }
                         }
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 6)
+                        
+                        // Display email error if exists
+                        if let error = emailError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
+                        }
                         
                         // Password Field
                         VStack(alignment: .leading, spacing: 8) {
@@ -76,8 +114,11 @@ struct LoginScreenView: View {
                                         .cornerRadius(8)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
                                         )
+                                        .onChange(of: password) { _ in 
+                                            validatePassword()
+                                        }
                                         .placeholder(when: password.isEmpty) {
                                             Text("Enter Password")
                                                 .font(.custom("Magistral", size: 14))
@@ -93,8 +134,11 @@ struct LoginScreenView: View {
                                         .cornerRadius(8)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                                .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
                                         )
+                                        .onChange(of: password) { _ in 
+                                            validatePassword()
+                                        }
                                         .placeholder(when: password.isEmpty) {
                                             Text("Enter Password")
                                                 .font(.custom("Magistral", size: 14))
@@ -113,7 +157,16 @@ struct LoginScreenView: View {
                                 }
                             }
                         }
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 6)
+                        
+                        // Display password error if exists
+                        if let error = passwordError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        }
                         
                         // Sign up and Forgot Password links with equal spacing
                         HStack {
@@ -139,18 +192,37 @@ struct LoginScreenView: View {
                         }
                         .padding(.vertical, 20) // Equal padding top and bottom
                         
+                        // Authentication error alert
+                        if showAuthError {
+                            Text(authErrorMessage)
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.bottom, 10)
+                        }
+                        
                         // Login Button with 51px height
                         Button(action: {
-                            // Use AppCoordinator to replace the entire view hierarchy
-                            AppCoordinator.shared.switchToMainInterface()
+                            // Validate form before proceeding
+                            if validateForm() {
+                                login()
+                            }
                         }) {
-                            Text("Login")
-                                .font(.custom("Magistral", size: 16))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 51) // Exact 51px height
-                                .background(brandBlue)
-                                .cornerRadius(8)
+                            ZStack {
+                                Text("Login")
+                                    .font(.custom("Magistral", size: 16))
+                                    .foregroundColor(.white)
+                                    .opacity(isLoading ? 0 : 1)
+                                
+                                if isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 51) // Exact 51px height
+                            .background(isFormValid ? brandBlue : brandBlue.opacity(0.5))
+                            .cornerRadius(8)
                         }
                         .padding(.bottom, 25)
                         
@@ -245,6 +317,74 @@ struct LoginScreenView: View {
                     let names = UIFont.fontNames(forFamilyName: family)
                     print("Family: \(family) font names: \(names)")
                 }
+            }
+        }
+    }
+    
+    // MARK: - Validation Methods
+    
+    private func validateEmail() {
+        if email.isEmpty {
+            emailError = nil
+        } else if !isEmailValid {
+            emailError = "Please enter a valid email address"
+        } else {
+            emailError = nil
+        }
+    }
+    
+    private func validatePassword() {
+        if password.isEmpty {
+            passwordError = nil
+        } else if !isPasswordValid {
+            passwordError = "Password must be at least 6 characters"
+        } else {
+            passwordError = nil
+        }
+    }
+    
+    private func validateForm() -> Bool {
+        // Force validation of both fields
+        validateEmail()
+        validatePassword()
+        
+        // Check if email and password are not empty
+        if email.isEmpty {
+            emailError = "Email is required"
+        }
+        
+        if password.isEmpty {
+            passwordError = "Password is required"
+        }
+        
+        return isFormValid && !email.isEmpty && !password.isEmpty
+    }
+    
+    // MARK: - Authentication Methods
+    
+    private func login() {
+        // Reset any previous auth errors
+        showAuthError = false
+        authErrorMessage = ""
+        
+        // Show loading state
+        isLoading = true
+        
+        // Simulate network delay - in a real app, this would be an API call
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            // This is where you would implement actual authentication logic
+            // For now, we'll simulate a successful login for the demo
+            // In a real implementation, you would handle success and failure cases
+            
+            if email.lowercased() == "error@example.com" {
+                // Simulate an authentication error
+                showAuthError = true
+                authErrorMessage = "Invalid email or password. Please try again."
+                isLoading = false
+            } else {
+                // Success case - proceed to main interface
+                isLoading = false
+                AppCoordinator.shared.switchToMainInterface()
             }
         }
     }
