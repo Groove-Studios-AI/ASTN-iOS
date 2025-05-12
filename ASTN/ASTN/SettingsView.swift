@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct SettingsView: View {
     @Binding var isPresented: Bool
@@ -78,7 +79,8 @@ struct SettingsView: View {
                 
                 // Logout button
                 Button(action: {
-                    // Logout action
+                    // Logout action - Reset to welcome screen
+                    resetToWelcomeScreen()
                 }) {
                     Text("Logout")
                         .font(.custom("Magistral", size: 16))
@@ -159,6 +161,24 @@ struct SettingsRowView: View {
 }
 
 // Preview
+// Function to reset to welcome screen
+func resetToWelcomeScreen() {
+    // Create a UIHostingController with WelcomeScreenView
+    let welcomeView = WelcomeScreenView()
+    let hostingController = UIHostingController(rootView: welcomeView)
+    
+    // Get the window scene and set the root view controller
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let window = windowScene.windows.first {
+        
+        // Optional animation for smoother transition
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            // Set the welcome screen as the new root view controller
+            window.rootViewController = hostingController
+        }, completion: nil)
+    }
+}
+
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView(isPresented: .constant(true))
