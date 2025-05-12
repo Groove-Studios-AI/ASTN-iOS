@@ -23,6 +23,14 @@ class AppCoordinator {
         setRootViewController(hostingController)
     }
     
+    // Switch to onboarding flow after signup
+    func switchToOnboardingFlow() {
+        let onboardingView = OnboardingView()
+        let hostingController = UIHostingController(rootView: onboardingView)
+        
+        setRootViewController(hostingController)
+    }
+    
     // Handle forgot password flow
     func showForgotPasswordFlow() {
         // This would display a forgot password screen when implemented

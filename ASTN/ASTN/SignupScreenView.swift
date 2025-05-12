@@ -533,9 +533,9 @@ struct SignupScreenView: View {
                 authErrorMessage = "This email is already registered. Please use a different email or login."
                 isLoading = false
             } else {
-                // Success case - proceed to main interface
+                // Success case - proceed to onboarding flow
                 isLoading = false
-                AppCoordinator.shared.switchToMainInterface()
+                AppCoordinator.shared.switchToOnboardingFlow()
             }
         }
     }
