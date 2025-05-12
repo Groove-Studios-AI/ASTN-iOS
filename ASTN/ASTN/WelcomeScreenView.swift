@@ -93,8 +93,8 @@ struct WelcomeScreenView: View {
                         
                         // Get Started button - using brand blue
                         Button(action: {
-                            // Navigate to the next screen (login/signup)
-                            self.isActive = true
+                            // Navigate to the login screen using AppCoordinator
+                            AppCoordinator.shared.switchToAuthFlow()
                         }) {
                             Text("Get Started")
                                 .font(.custom("magistral", size: 17))
@@ -111,9 +111,6 @@ struct WelcomeScreenView: View {
                 }
             }
             .navigationBarHidden(true)
-            .navigationDestination(isPresented: $isActive) {
-                LoginScreenView() // Navigate to the login screen
-            }
             .onAppear {
                 // Make sure the font is correctly loaded
                 for family in UIFont.familyNames.sorted() {

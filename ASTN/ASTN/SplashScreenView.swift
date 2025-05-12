@@ -53,11 +53,9 @@ struct SplashScreenView: View {
                 
                 // Navigate to next screen after a delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    self.isActive = true
+                    // Use AppCoordinator to switch to welcome screen
+                    AppCoordinator.shared.switchToWelcomeScreen()
                 }
-            }
-            .navigationDestination(isPresented: $isActive) {
-                WelcomeScreenView()
             }
         }
     }
