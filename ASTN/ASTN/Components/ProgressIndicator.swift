@@ -6,7 +6,7 @@ struct ProgressIndicator: View {
     
     private let activeColor = Color.fromHex("#1A2196") // Brand blue
     private let inactiveColor = Color.gray.opacity(0.3)
-    private let completedColor = Color.blue
+    private let completedColor = Color.fromHex("#1A2196") // Using same brand blue for consistency
     
     var body: some View {
         VStack(spacing: 8) {

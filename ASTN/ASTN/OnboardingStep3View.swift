@@ -123,7 +123,7 @@ struct GoalOptionButton: View {
             .frame(maxWidth: .infinity)
             .background(
                 isSelected 
-                ? Color.white.opacity(0.2) 
+                ? Color.fromHex("#1A2196") 
                 : Color.white.opacity(0.1)
             )
             .cornerRadius(8)

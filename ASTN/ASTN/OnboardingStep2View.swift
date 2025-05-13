@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct OnboardingStep2View: View {
     // Callback when the user continues to the next step
@@ -8,10 +9,6 @@ struct OnboardingStep2View: View {
     @State private var selectedInterests = Set<Interest>()
     @State private var showMaxSelectionWarning = false
     
-    // Colors
-    private let brandBlue = Color.fromHex("#1A2196")
-    private let brandBlack = Color.fromHex("#0A0A0A")
-    
     // Max number of interests
     private let maxInterests = 10
     
@@ -20,79 +17,149 @@ struct OnboardingStep2View: View {
         !selectedInterests.isEmpty
     }
     
-    // Random positioning of interest bubbles
-    private let interestLayouts: [InterestLayout] = [
-        // Center large interests
-        InterestLayout(interest: .education, size: .large, position: .center),
-        InterestLayout(interest: .entrepreneurship, size: .large, position: .bottomCenter),
-        InterestLayout(interest: .familyAndRelationships, size: .large, position: .topLeft),
-        
-        // Medium interests
-        InterestLayout(interest: .healthAndWellness, size: .medium, position: .centerRight),
-        InterestLayout(interest: .technology, size: .medium, position: .topRight),
-        InterestLayout(interest: .music, size: .medium, position: .centerLeft),
-        InterestLayout(interest: .artAndCulture, size: .medium, position: .bottomRight),
-        InterestLayout(interest: .travel, size: .medium, position: .middle),
-        
-        // Small interests
-        InterestLayout(interest: .sustainability, size: .small, position: .bottomLeft),
-        InterestLayout(interest: .innovation, size: .small, position: .topLeft),
-        InterestLayout(interest: .fitness, size: .small, position: .bottomLeft),
-        InterestLayout(interest: .commerce, size: .small, position: .centerRight),
-        InterestLayout(interest: .animalWelfare, size: .small, position: .topRight),
-        InterestLayout(interest: .foodAndCooking, size: .small, position: .bottomRight),
-        InterestLayout(interest: .communityEngagement, size: .small, position: .bottomLeft),
-        InterestLayout(interest: .adventureAndOutdoor, size: .small, position: .centerLeft),
-        InterestLayout(interest: .mentalHealth, size: .small, position: .bottom),
-        InterestLayout(interest: .gaming, size: .small, position: .bottomCenter),
-        InterestLayout(interest: .fashion, size: .small, position: .topLeft),
-        InterestLayout(interest: .environmentalConservation, size: .small, position: .topRight)
+    // All available interests for selection
+    private let allInterests: [Interest] = [
+        .familyAndRelationships,
+        .education,
+        .music,
+        .technology,
+        .travel,
+        .healthAndWellness,
+        .innovation,
+        .artAndCulture,
+        .commerce,
+        .fitness,
+        .entrepreneurship,
+        .sustainability,
+        .animalWelfare,
+        .foodAndCooking,
+        .communityEngagement,
+        .adventureAndOutdoor,
+        .mentalHealth,
+        .gaming,
+        .fashion,
+        .environmentalConservation
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+        ZStack {
+            // Background
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // Header with back button and title
+                HStack {
+                    Button(action: {}) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .semibold))
+                    }
+                    .padding(.leading, 8)
+                    
+                    Spacer()
+                    
+                    Text("Sign Up")
+                        .font(.custom("Magistral", size: 20))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    // Empty space to balance the back button
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: 24, height: 24)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 16)
+                
                 // Progress indicator
-                ProgressIndicator(currentStep: 2, totalSteps: 3)
-                    .padding(.bottom, 5)
+                ZStack(alignment: .leading) {
+                    // Background track
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 3)
+                    
+                    // Blue progress indicator
+                    Rectangle()
+                        .fill(Color.fromHex("#1A2196"))
+                        .frame(width: UIScreen.main.bounds.width * 0.66, height: 3) // 2/3 progress
+                    
+                    // Position indicators
+                    HStack(spacing: 0) {
+                        // Step 1 indicator (complete)
+                        Circle()
+                            .fill(Color.fromHex("#1A2196"))
+                            .frame(width: 12, height: 12)
+                        
+                        Spacer()
+                        
+                        // Step 2 indicator (current)
+                        Circle()
+                            .fill(Color.fromHex("#1A2196"))
+                            .frame(width: 12, height: 12)
+                        
+                        Spacer()
+                        
+                        // Step 3 indicator (upcoming)
+                        Circle()
+                            .fill(Color.gray.opacity(0.5))
+                            .frame(width: 12, height: 12)
+                    }
+                    .padding(.horizontal, 16)
+                }
+                .padding(.horizontal, 16)
+                
+                Text("Step 2 of 3")
+                    .font(.custom("Magistral", size: 14))
+                    .foregroundColor(.gray)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 
                 // Main heading
                 Text("What do you value?")
                     .font(.custom("Magistral", size: 28))
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .padding(.bottom, 5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
                 
                 // Selection instructions
                 Text("Values & Interests (Select Up to \(maxInterests))")
                     .font(.custom("Magistral", size: 16))
                     .foregroundColor(.white.opacity(0.7))
-                    .padding(.bottom, 20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 4)
+                    .padding(.bottom, 24)
                 
                 // Max selection warning
                 if showMaxSelectionWarning {
-                    Text("You can select at most \(maxInterests) interests")
+                    Text("You can select up to \(maxInterests) interests")
                         .font(.custom("Magistral", size: 14))
                         .foregroundColor(.red.opacity(0.8))
-                        .padding(.bottom, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 8)
                 }
                 
-                // Interest bubbles
-                ZStack {
-                    ForEach(interestLayouts, id: \.interest) { layout in
-                        InterestBubble(
-                            interest: layout.interest,
-                            isSelected: selectedInterests.contains(layout.interest),
-                            size: layout.size,
-                            onTap: { interest in
-                                toggleInterest(interest)
-                            }
-                        )
-                        .offset(layout.offset)
+                // Scrollable container for interests
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 20)], spacing: 20) {
+                        ForEach(allInterests, id: \.self) { interest in
+                            InterestButton(
+                                interest: interest, 
+                                isSelected: selectedInterests.contains(interest),
+                                onTap: {
+                                    toggleInterest(interest)
+                                }
+                            )
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
                 }
-                .frame(height: 600)
-                .padding(.bottom, 20)
                 
                 Spacer()
                 
@@ -116,130 +183,76 @@ struct OnboardingStep2View: View {
                     .padding(.horizontal, 24)
                     .frame(height: 56)
                     .frame(maxWidth: .infinity)
-                    .background(isFormValid ? brandBlue : brandBlue.opacity(0.5))
+                    .background(isFormValid ? Color.fromHex("#1A2196") : Color.fromHex("#1A2196").opacity(0.5))
                     .cornerRadius(8)
                 }
                 .disabled(!isFormValid)
-                .padding(.top, 16)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
             }
-            .padding([.horizontal, .bottom], 24)
         }
     }
     
     // Handle interest selection/deselection
     private func toggleInterest(_ interest: Interest) {
+        // Provide haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        
         if selectedInterests.contains(interest) {
             selectedInterests.remove(interest)
             showMaxSelectionWarning = false
+            generator.impactOccurred()
         } else {
             if selectedInterests.count < maxInterests {
                 selectedInterests.insert(interest)
                 showMaxSelectionWarning = false
+                generator.impactOccurred()
             } else {
                 showMaxSelectionWarning = true
+                // Error haptic feedback for max selection reached
+                let errorGenerator = UINotificationFeedbackGenerator()
+                errorGenerator.notificationOccurred(.warning)
             }
         }
     }
 }
 
-// Interest layout for dynamic positioning
-struct InterestLayout {
-    let interest: Interest
-    let size: InterestBubbleSize
-    let position: BubblePosition
-    
-    var offset: CGSize {
-        switch position {
-        case .topLeft:
-            return CGSize(width: -100, height: -180)
-        case .topRight:
-            return CGSize(width: 100, height: -180)
-        case .bottomLeft:
-            return CGSize(width: -100, height: 180)
-        case .bottomRight:
-            return CGSize(width: 100, height: 180)
-        case .center:
-            return CGSize(width: 0, height: 0)
-        case .centerLeft:
-            return CGSize(width: -120, height: 0)
-        case .centerRight:
-            return CGSize(width: 120, height: 0)
-        case .topCenter:
-            return CGSize(width: 0, height: -180)
-        case .bottomCenter:
-            return CGSize(width: 0, height: 180)
-        case .middle:
-            return CGSize(width: 0, height: -60)
-        case .bottom:
-            return CGSize(width: 0, height: 120)
-        }
-    }
-}
-
-// Bubble positions for layout
-enum BubblePosition {
-    case topLeft, topRight, bottomLeft, bottomRight, center
-    case centerLeft, centerRight, topCenter, bottomCenter, middle, bottom
-}
-
-// Interest bubble component for step 2
-struct InterestBubble: View {
+// Custom interest button component with image assets
+struct InterestButton: View {
     let interest: Interest
     let isSelected: Bool
-    let size: InterestBubbleSize
-    let onTap: (Interest) -> Void
+    let onTap: () -> Void
     
     var body: some View {
-        Text(interest.rawValue)
-            .font(.custom("Magistral", size: fontSize))
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(height: height)
-            .background(
-                Circle()
-                    .fill(isSelected ? Color.fromHex("#1A2196").opacity(0.8) : Color.black.opacity(0.6))
-                    .overlay(
+        Button(action: onTap) {
+            ZStack {
+                // Just use text placeholder during development until image assets are properly set up
+                Text(interest.rawValue)
+                    .font(.custom("Magistral", size: 14))
+                    .foregroundColor(isSelected ? .white : .gray)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 12)
+                    .frame(width: 100, height: 100)
+                    .background(
                         Circle()
-                            .stroke(Color.white.opacity(isSelected ? 0.9 : 0.3), lineWidth: isSelected ? 2 : 1)
+                            .fill(isSelected ? Color.blue.opacity(0.8) : Color.black.opacity(0.6))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(isSelected ? 0.9 : 0.3), lineWidth: isSelected ? 2 : 1)
+                            )
                     )
-            )
-            .onTapGesture {
-                withAnimation(.spring()) {
-                    onTap(interest)
-                }
             }
-    }
-    
-    // Dynamic sizing based on bubble size
-    private var fontSize: CGFloat {
-        switch size {
-        case .small: return 12
-        case .medium: return 14
-        case .large: return 16
         }
+        .animation(.spring(), value: isSelected)
     }
-    
-    private var height: CGFloat {
-        switch size {
-        case .small: return 70
-        case .medium: return 80
-        case .large: return 90
-        }
-    }
-}
-
-// Bubble size enumeration
-enum InterestBubbleSize {
-    case small, medium, large
 }
 
 // Preview for development
 struct OnboardingStep2View_Previews: PreviewProvider {
     static var previews: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            OnboardingStep2View(onContinue: { _ in })
-        }
+        OnboardingStep2View(onContinue: { _ in })
     }
 }

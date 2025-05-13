@@ -89,7 +89,7 @@ struct OnboardingStep1View: View {
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     selectedAthleteType == athleteType 
-                                    ? Color.white.opacity(0.2) 
+                                    ? brandBlue
                                     : Color.white.opacity(0.1)
                                 )
                                 .cornerRadius(8)
@@ -134,7 +134,7 @@ struct OnboardingStep1View: View {
                                 }
                                 .frame(height: 56)
                                 .frame(maxWidth: .infinity)
-                                .background(Color.white.opacity(0.1))
+                                .background(!selectedSport.isEmpty ? brandBlue : Color.white.opacity(0.1))
                                 .cornerRadius(8)
                             }
                         }
@@ -163,7 +163,7 @@ struct OnboardingStep1View: View {
                                 .padding(.trailing, 6)
                             }
                             .frame(height: 56)
-                            .background(Color.white.opacity(0.1))
+                            .background(!customSport.isEmpty ? brandBlue : Color.white.opacity(0.1))
                             .cornerRadius(8)
                         }
                     }
@@ -192,7 +192,7 @@ struct OnboardingStep1View: View {
                                     }
                                     .frame(height: 56)
                                     .frame(maxWidth: .infinity)
-                                    .background(Color(hex: "#1A1A1A"))
+                                    .background(selectedSport == sport ? brandBlue : Color(hex: "#1A1A1A"))
                                 }
                                 if sport != sports.last {
                                     Divider()
@@ -235,7 +235,7 @@ struct OnboardingStep1View: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.white.opacity(0.1))
+                        .background(brandBlue)
                         .cornerRadius(8)
                     }
                     
@@ -285,7 +285,7 @@ struct OnboardingStep1View: View {
                                 .padding(.leading, 16)
                         }
                         .padding()
-                        .background(Color.white.opacity(0.1))
+                        .background(!phoneNumber.isEmpty ? brandBlue : Color.white.opacity(0.1))
                         .cornerRadius(8)
                         .keyboardType(.phonePad)
                 }
