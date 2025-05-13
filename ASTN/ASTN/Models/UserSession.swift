@@ -71,14 +71,13 @@ class UserSession: ObservableObject {
                    let authMethod = AuthMethod(rawValue: authMethodStr) {
                     
                     // Create a user from the response
-                    var newUser = User(id: userId, email: email, authMethod: authMethod)
+                    var newUser = User.newUser(id: userId, email: email, authMethod: authMethod)
                     
                     // Populate other user fields if available
                     if let onboardingDict = user["onboarding"] as? [String: Any],
                        let surveyCompleted = onboardingDict["surveyCompleted"] as? Bool {
-                        var onboarding = OnboardingState()
-                        onboarding.surveyCompleted = surveyCompleted
-                        newUser.onboarding = onboarding
+                        newUser.onboarding.surveyCompleted = surveyCompleted
+                        newUser.onboarding.completionTimestamp = Date()
                         
                         // If onboarding is complete, we should go straight to the main app
                         self?.isOnboarding = !surveyCompleted
@@ -121,26 +120,28 @@ class UserSession: ObservableObject {
             return
         }
         
-        // Update local user data first
-        user.athleteType = athleteType
-        user.sport = sport
-        // Store date of birth and phone number
-        // For a real implementation, we should add these fields to the User model
-        // But for now, we can store them in UserDefaults temporarily
-        UserDefaults.standard.set(dateOfBirth, forKey: "userDateOfBirth")
+        // Use the new updateStep1 method
+        user.updateStep1(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber)
+        
+        // Store phone number in UserDefaults (not part of core model but needed for password retrieval)
         UserDefaults.standard.set(phoneNumber, forKey: "userPhoneNumber")
         
-        user.onboarding.currentStep = 2
-        user.onboarding.stepsCompleted = 1
+        // Update current user
         currentUser = user
         
+        // Prepare data for API
+        let updateData: [String: Any] = [
+            "athleteType": athleteType.rawValue, 
+            "sport": sport,
+            "dateOfBirth": dateOfBirth,
+            "phoneNumber": phoneNumber,
+            "age": user.age as Any,
+            "onboarding": ["currentStep": user.onboarding.currentStep, 
+                          "stepsCompleted": user.onboarding.stepsCompleted]
+        ]
+        
         // Send update to API
-        apiService.updateUser(userId: user.id, data: ["athleteType": athleteType.rawValue, 
-                                                     "sport": sport,
-                                                     "dateOfBirth": dateOfBirth,
-                                                     "phoneNumber": phoneNumber,
-                                                     "onboarding": ["currentStep": 2, "stepsCompleted": 1]],
-                              token: authToken) { [weak self] result in
+        apiService.updateUser(userId: user.id, data: updateData, token: authToken) { [weak self] result in
             switch result {
             case .success(_):
                 // Update successful
@@ -159,20 +160,22 @@ class UserSession: ObservableObject {
             return
         }
         
-        // Update local user data first
-        user.interests = interests
-        user.onboarding.currentStep = 3
-        user.onboarding.stepsCompleted = 2
+        // Use the new updateStep2 method
+        user.updateStep2(interests: interests)
+        
+        // Update current user
         currentUser = user
         
-        // Convert interests to raw values for API
-        let interestStrings = interests.map { $0.rawValue }
+        // Prepare data for API
+        let interestValues = interests.map { $0.rawValue }
+        let updateData: [String: Any] = [
+            "interests": interestValues,
+            "onboarding": ["currentStep": user.onboarding.currentStep, 
+                          "stepsCompleted": user.onboarding.stepsCompleted]
+        ]
         
         // Send update to API
-        apiService.updateUser(userId: user.id, 
-                              data: ["interests": interestStrings,
-                                    "onboarding": ["currentStep": 3, "stepsCompleted": 2]],
-                              token: authToken) { [weak self] result in
+        apiService.updateUser(userId: user.id, data: updateData, token: authToken) { [weak self] result in
             switch result {
             case .success(_):
                 // Update successful
@@ -191,27 +194,30 @@ class UserSession: ObservableObject {
             return
         }
         
-        // Update local user data first
+        // Use the new updateStep3 method
+        user.updateStep3(learningGoal: learningGoal)
+        
+        // Also update mindset profile based on learning goal
         user.mindsetProfile = getMindsetFromLearningGoal(learningGoal)
-        user.onboarding.currentStep = 4 // Completed all steps
-        user.onboarding.stepsCompleted = 3
-        user.onboarding.surveyCompleted = true
-        user.onboarding.completionTimestamp = Date()
+        
+        // Update current user
         currentUser = user
         
-        // Onboarding is now complete
-        isOnboarding = false
+        // Not completing onboarding yet - still need profile picture step
+        
+        // Prepare data for API
+        let updateData: [String: Any] = [
+            "mindsetProfile": user.mindsetProfile?.rawValue as Any,
+            "learningGoal": learningGoal.rawValue,
+            "preferredContentType": user.preferredContentType?.rawValue as Any,
+            "onboarding": [
+                "currentStep": user.onboarding.currentStep,
+                "stepsCompleted": user.onboarding.stepsCompleted
+            ]
+        ]
         
         // Send update to API
-        apiService.updateUser(userId: user.id, 
-                              data: ["mindsetProfile": getMindsetFromLearningGoal(learningGoal).rawValue,
-                                    "onboarding": [
-                                        "currentStep": 4,
-                                        "stepsCompleted": 3,
-                                        "surveyCompleted": true,
-                                        "completionTimestamp": Date().timeIntervalSince1970
-                                    ]],
-                              token: authToken) { [weak self] result in
+        apiService.updateUser(userId: user.id, data: updateData, token: authToken) { [weak self] result in
             switch result {
             case .success(_):
                 // Update successful
@@ -272,6 +278,90 @@ class UserSession: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "currentUser")
         UserDefaults.standard.removeObject(forKey: "authToken")
     }
+    
+    // MARK: - Profile Picture Methods
+    
+    /// Update user with profile picture
+    func updateUserProfilePicture(imageData: Data, completion: @escaping (Result<User, Error>) -> Void) {
+        guard var user = currentUser else {
+            completion(.failure(SessionError.noUserLoggedIn))
+            return
+        }
+        
+        // Complete the onboarding process
+        user.completeOnboarding()
+        currentUser = user
+        
+        // Onboarding is now complete
+        isOnboarding = false
+        
+        // Prepare onboarding completion data
+        let updateData: [String: Any] = [
+            "onboarding": [
+                "surveyCompleted": true,
+                "completionTimestamp": ISO8601DateFormatter().string(from: user.onboarding.completionTimestamp ?? Date()),
+                "stepsCompleted": user.onboarding.totalSteps
+            ],
+            "currentStage": user.currentStage.rawValue
+        ]
+        
+        // Send update to API
+        apiService.uploadProfilePicture(userId: user.id, imageData: imageData, token: authToken) { [weak self] pictureResult in
+            switch pictureResult {
+            case .success(_):
+                // After successful picture upload, update the onboarding status
+                self?.apiService.updateUser(userId: user.id, data: updateData, token: self?.authToken) { finalResult in
+                    switch finalResult {
+                    case .success(_):
+                        // Everything successful
+                        self?.saveSession(user: user, token: self?.authToken)
+                        completion(.success(user))
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    /// Skip profile picture upload and complete onboarding
+    func skipProfilePicture(completion: @escaping (Result<User, Error>) -> Void) {
+        guard var user = currentUser else {
+            completion(.failure(SessionError.noUserLoggedIn))
+            return
+        }
+        
+        // Complete the onboarding process
+        user.completeOnboarding()
+        currentUser = user
+        
+        // Onboarding is now complete
+        isOnboarding = false
+        
+        // Prepare data for API
+        let updateData: [String: Any] = [
+            "onboarding": [
+                "surveyCompleted": true,
+                "completionTimestamp": ISO8601DateFormatter().string(from: user.onboarding.completionTimestamp ?? Date()),
+                "stepsCompleted": user.onboarding.totalSteps
+            ],
+            "currentStage": user.currentStage.rawValue
+        ]
+        
+        // Send update to API
+        apiService.updateUser(userId: user.id, data: updateData, token: authToken) { [weak self] result in
+            switch result {
+            case .success(_):
+                // Update successful
+                self?.saveSession(user: user, token: self?.authToken)
+                completion(.success(user))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
 }
 
 // Custom errors
@@ -284,6 +374,22 @@ enum SessionError: Error {
 
 // Simplified API service (mock implementation)
 class APIService {
+    
+    func uploadProfilePicture(userId: String, imageData: Data, token: String?, completion: @escaping (Result<[String: Any], Error>) -> Void) {
+        // Validate token
+        guard token != nil else {
+            completion(.failure(SessionError.sessionExpired))
+            return
+        }
+        
+        // Simulate network delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Mock successful response with image URL
+            let imageUrl = "https://api.astn.app/users/\(userId)/profile-picture.jpg"
+            completion(.success(["url": imageUrl]))
+        }
+    }
+    
     func registerUser(email: String, password: String, completion: @escaping (Result<[String: Any], Error>) -> Void) {
         // Simulate network delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {

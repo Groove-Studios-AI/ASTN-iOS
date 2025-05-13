@@ -22,7 +22,7 @@ struct OnboardingView: View {
                             OnboardingStep1View(
                                 onContinue: { athleteType, sport, dateOfBirth, phoneNumber in
                                     // Update user with step 1 data
-                                    if let user = userSession.currentUser {
+                                    if userSession.currentUser != nil {
                                         userSession.updateUserStep1(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber) { result in
                                             switch result {
                                             case .success(_):
@@ -42,7 +42,7 @@ struct OnboardingView: View {
                             OnboardingStep2View(
                                 onContinue: { interests in
                                     // Update user with step 2 data
-                                    if let user = userSession.currentUser {
+                                    if userSession.currentUser != nil {
                                         userSession.updateUserStep2(interests: interests) { result in
                                             switch result {
                                             case .success(_):
@@ -62,7 +62,7 @@ struct OnboardingView: View {
                             OnboardingStep3View(
                                 onContinue: { learningGoal in
                                     // Update user with step 3 data
-                                    if let user = userSession.currentUser {
+                                    if userSession.currentUser != nil {
                                         userSession.updateUserStep3(learningGoal: learningGoal) { result in
                                             switch result {
                                             case .success(_):
