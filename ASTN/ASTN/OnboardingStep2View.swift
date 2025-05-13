@@ -238,7 +238,7 @@ struct InterestButton: View {
                     .frame(width: 100, height: 100)
                     .background(
                         Circle()
-                            .fill(isSelected ? Color.blue.opacity(0.8) : Color.black.opacity(0.6))
+                            .fill(isSelected ? Color.fromHex("#1A2196") : Color.black.opacity(0.6))
                             .overlay(
                                 Circle()
                                     .stroke(Color.white.opacity(isSelected ? 0.9 : 0.3), lineWidth: isSelected ? 2 : 1)

@@ -93,8 +93,12 @@ struct WelcomeScreenView: View {
                         
                         // Get Started button - using brand blue
                         Button(action: {
-                            // Navigate to the login screen using AppCoordinator
-                            AppCoordinator.shared.switchToAuthFlow()
+                            // Add a small delay to ensure the button press is recognized
+                            print("Get Started button pressed")
+                            DispatchQueue.main.async {
+                                // Navigate to the login screen using AppCoordinator
+                                AppCoordinator.shared.switchToAuthFlow()
+                            }
                         }) {
                             Text("Get Started")
                                 .font(.custom("magistral", size: 17))
