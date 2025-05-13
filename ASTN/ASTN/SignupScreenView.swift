@@ -1,26 +1,37 @@
 import SwiftUI
-import UIKit
 import Combine
 
-struct LoginScreenView: View {
+struct SignupScreenView: View {
     // Define brand colors
     private let brandBlack = Color.fromHex("#0A0A0A")
     private let brandBlue = Color.fromHex("#1A2196")
     private let errorRed = Color.red.opacity(0.8)
     
+    // Navigation
+    @Environment(\.presentationMode) var presentationMode
+    
     // State variables for form fields
+    @State private var name: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
+    @State private var confirmPassword: String = ""
     @State private var isPasswordVisible: Bool = false
+    @State private var isConfirmPasswordVisible: Bool = false
     
     // Validation states
+    @State private var nameError: String? = nil
     @State private var emailError: String? = nil
     @State private var passwordError: String? = nil
+    @State private var confirmPasswordError: String? = nil
     @State private var showAuthError: Bool = false
     @State private var authErrorMessage: String = ""
     @State private var isLoading: Bool = false
     
     // Computed properties for validation
+    private var isNameValid: Bool {
+        return name.count >= 2
+    }
+    
     private var isEmailValid: Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
@@ -31,8 +42,12 @@ struct LoginScreenView: View {
         return password.count >= 6
     }
     
+    private var isConfirmPasswordValid: Bool {
+        return password == confirmPassword && !confirmPassword.isEmpty
+    }
+    
     private var isFormValid: Bool {
-        return isEmailValid && isPasswordValid
+        return isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid
     }
     
     var body: some View {
@@ -43,21 +58,52 @@ struct LoginScreenView: View {
                 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Logo - using ASTN_LaunchLogo with exact dimensions
-                        Image("ASTN_LaunchLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 253, height: 118)
-                            .padding(.top, 40)
-                            .padding(.bottom, 30)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        // Login Header
-                        Text("Login")
+                        // Sign Up Header
+                        Text("Sign Up")
                             .font(.custom("Magistral", size: 24))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.bottom, 30)
+                            .padding(.top, 20)
+                        
+                        // Name Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Name")
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                            
+                            TextField("", text: $name)
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(nameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                )
+                                .onChange(of: name) { _ in 
+                                    validateName()
+                                }
+                                .placeholder(when: name.isEmpty) {
+                                    Text("Enter Your Name")
+                                        .font(.custom("Magistral", size: 14))
+                                        .foregroundColor(.gray)
+                                        .padding(.leading, 16)
+                                }
+                        }
+                        .padding(.bottom, 6)
+                        
+                        // Display name error if exists
+                        if let error = nameError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
+                        }
                         
                         // Email Field
                         VStack(alignment: .leading, spacing: 8) {
@@ -118,6 +164,7 @@ struct LoginScreenView: View {
                                         )
                                         .onChange(of: password) { _ in 
                                             validatePassword()
+                                            validateConfirmPassword()
                                         }
                                         .placeholder(when: password.isEmpty) {
                                             Text("Enter Password")
@@ -138,6 +185,7 @@ struct LoginScreenView: View {
                                         )
                                         .onChange(of: password) { _ in 
                                             validatePassword()
+                                            validateConfirmPassword()
                                         }
                                         .placeholder(when: password.isEmpty) {
                                             Text("Enter Password")
@@ -166,29 +214,81 @@ struct LoginScreenView: View {
                                 .foregroundColor(errorRed)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
                         }
                         
-                        // Sign up and Forgot Password links with equal spacing
-                        HStack {
-                            NavigationLink(destination: SignupScreenView()) {
-                                Text("Sign up for an account")
-                                    .font(.custom("Magistral", size: 14))
-                                    .foregroundColor(.white)
-                                    .underline()
-                            }
+                        // Confirm Password Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Confirm Password")
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
                             
-                            Spacer()
-                            
-                            Button(action: {
-                                AppCoordinator.shared.showForgotPasswordFlow()
-                            }) {
-                                Text("Forget Password")
-                                    .font(.custom("Magistral", size: 14))
-                                    .foregroundColor(.white)
-                                    .underline()
+                            ZStack(alignment: .trailing) {
+                                if isConfirmPasswordVisible {
+                                    TextField("", text: $confirmPassword)
+                                        .font(.custom("Magistral", size: 14))
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(8)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                        )
+                                        .onChange(of: confirmPassword) { _ in 
+                                            validateConfirmPassword()
+                                        }
+                                        .placeholder(when: confirmPassword.isEmpty) {
+                                            Text("Re-enter Password")
+                                                .font(.custom("Magistral", size: 14))
+                                                .foregroundColor(.gray)
+                                                .padding(.leading, 16)
+                                        }
+                                } else {
+                                    SecureField("", text: $confirmPassword)
+                                        .font(.custom("Magistral", size: 14))
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(8)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                        )
+                                        .onChange(of: confirmPassword) { _ in 
+                                            validateConfirmPassword()
+                                        }
+                                        .placeholder(when: confirmPassword.isEmpty) {
+                                            Text("Re-enter Password")
+                                                .font(.custom("Magistral", size: 14))
+                                                .foregroundColor(.gray)
+                                                .padding(.leading, 16)
+                                        }
+                                }
+                                
+                                // Eye icon for confirm password visibility
+                                Button(action: {
+                                    isConfirmPasswordVisible.toggle()
+                                }) {
+                                    Image(systemName: isConfirmPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                                        .foregroundColor(.gray)
+                                        .padding(.trailing, 16)
+                                }
                             }
                         }
-                        .padding(.vertical, 20) // Equal padding top and bottom
+                        .padding(.bottom, 6)
+                        
+                        // Display confirm password error if exists
+                        if let error = confirmPasswordError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
+                        }
                         
                         // Authentication error alert
                         if showAuthError {
@@ -196,18 +296,18 @@ struct LoginScreenView: View {
                                 .font(.custom("Magistral", size: 14))
                                 .foregroundColor(errorRed)
                                 .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.bottom, 10)
+                                .padding(.vertical, 10)
                         }
                         
-                        // Login Button with 51px height
+                        // Sign Up Button
                         Button(action: {
                             // Validate form before proceeding
                             if validateForm() {
-                                login()
+                                signUp()
                             }
                         }) {
                             ZStack {
-                                Text("Login")
+                                Text("Sign up")
                                     .font(.custom("Magistral", size: 16))
                                     .foregroundColor(.white)
                                     .opacity(isLoading ? 0 : 1)
@@ -218,13 +318,32 @@ struct LoginScreenView: View {
                                 }
                             }
                             .frame(maxWidth: .infinity)
-                            .frame(height: 51) // Exact 51px height
+                            .frame(height: 51)
                             .background(isFormValid ? brandBlue : brandBlue.opacity(0.5))
                             .cornerRadius(8)
                         }
+                        .padding(.top, 15)
+                        .padding(.bottom, 20)
+                        
+                        // Already have an account
+                        HStack {
+                            Text("Already have an account?")
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                            
+                            Button(action: {
+                                // Navigate back to login screen
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Text("Login Now")
+                                    .font(.custom("Magistral", size: 14))
+                                    .foregroundColor(.white)
+                                    .underline()
+                            }
+                        }
                         .padding(.bottom, 25)
                         
-                        // Or divider with white bold text
+                        // Or divider
                         HStack {
                             VStack { Divider().background(Color.white) }
                             Text("or")
@@ -235,11 +354,11 @@ struct LoginScreenView: View {
                         }
                         .padding(.bottom, 25)
                         
-                        // Social login buttons with proper logos
+                        // Social login buttons
                         VStack(spacing: 16) {
                             // Google
                             Button(action: {
-                                // Google login action
+                                // Google signup action
                             }) {
                                 HStack {
                                     Image("logos_google")
@@ -261,7 +380,7 @@ struct LoginScreenView: View {
                             
                             // Instagram
                             Button(action: {
-                                // Instagram login action
+                                // Instagram signup action
                             }) {
                                 HStack {
                                     Image("logos_instagram")
@@ -283,7 +402,7 @@ struct LoginScreenView: View {
                             
                             // LinkedIn
                             Button(action: {
-                                // LinkedIn login action
+                                // LinkedIn signup action
                             }) {
                                 HStack {
                                     Image("logos_linkedin-icon")
@@ -308,18 +427,32 @@ struct LoginScreenView: View {
                     .padding(.horizontal, 32)
                 }
             }
-            .navigationBarHidden(true)
-            .onAppear {
-                // Print font info for debugging
-                for family in UIFont.familyNames.sorted() {
-                    let names = UIFont.fontNames(forFamilyName: family)
-                    print("Family: \(family) font names: \(names)")
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                            .imageScale(.large)
+                    }
                 }
             }
         }
     }
     
     // MARK: - Validation Methods
+    
+    private func validateName() {
+        if name.isEmpty {
+            nameError = nil
+        } else if !isNameValid {
+            nameError = "Name must be at least 2 characters"
+        } else {
+            nameError = nil
+        }
+    }
     
     private func validateEmail() {
         if email.isEmpty {
@@ -341,12 +474,28 @@ struct LoginScreenView: View {
         }
     }
     
+    private func validateConfirmPassword() {
+        if confirmPassword.isEmpty {
+            confirmPasswordError = nil
+        } else if password != confirmPassword {
+            confirmPasswordError = "Passwords do not match"
+        } else {
+            confirmPasswordError = nil
+        }
+    }
+    
     private func validateForm() -> Bool {
-        // Force validation of both fields
+        // Force validation of all fields
+        validateName()
         validateEmail()
         validatePassword()
+        validateConfirmPassword()
         
-        // Check if email and password are not empty
+        // Check if fields are not empty
+        if name.isEmpty {
+            nameError = "Name is required"
+        }
+        
         if email.isEmpty {
             emailError = "Email is required"
         }
@@ -355,12 +504,16 @@ struct LoginScreenView: View {
             passwordError = "Password is required"
         }
         
-        return isFormValid && !email.isEmpty && !password.isEmpty
+        if confirmPassword.isEmpty {
+            confirmPasswordError = "Please confirm your password"
+        }
+        
+        return isFormValid && !name.isEmpty && !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
     }
     
     // MARK: - Authentication Methods
     
-    private func login() {
+    private func signUp() {
         // Reset any previous auth errors
         showAuthError = false
         authErrorMessage = ""
@@ -368,42 +521,51 @@ struct LoginScreenView: View {
         // Show loading state
         isLoading = true
         
+        // Get access to UserSession
+        let userSession = UserSession.shared
+        
         // Simulate network delay - in a real app, this would be an API call
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // This is where you would implement actual authentication logic
-            // For now, we'll simulate a successful login for the demo
-            // In a real implementation, you would handle success and failure cases
+            // This is where you would implement actual signup logic
+            // For now, we'll simulate a successful signup for the demo
             
-            if email.lowercased() == "error@example.com" {
+            if email.lowercased() == "taken@example.com" {
                 // Simulate an authentication error
                 showAuthError = true
-                authErrorMessage = "Invalid email or password. Please try again."
+                authErrorMessage = "This email is already registered. Please use a different email or login."
                 isLoading = false
             } else {
-                // Success case - proceed to main interface
-                isLoading = false
-                AppCoordinator.shared.switchToMainInterface()
+                // Create a new user object
+                let userId = UUID().uuidString
+                
+                // Register the user with UserSession
+                userSession.registerUser(email: email, password: password) { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .success(let user):
+                            // User successfully registered and stored in UserSession
+                            print("User registered: \(user.id)")
+                            
+                            // Success case - proceed to onboarding flow
+                            self.isLoading = false
+                            AppCoordinator.shared.switchToOnboardingFlow()
+                            
+                        case .failure(let error):
+                            // Handle registration error
+                            self.showAuthError = true
+                            self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
+                            self.isLoading = false
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-// Placeholder extension to help with empty text fields
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
-    }
-}
-
-struct LoginScreenView_Previews: PreviewProvider {
+// Add a preview provider for this view
+struct SignupScreenView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginScreenView()
+        SignupScreenView()
     }
 }
