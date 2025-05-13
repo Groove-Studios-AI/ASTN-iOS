@@ -8,6 +8,9 @@ struct OnboardingStep1View: View {
     // State for selections
     @State private var selectedAthleteType: AthleteType?
     @State private var selectedSport: String = ""
+    @State private var customSport: String = ""
+    @State private var showSportsList: Bool = false
+    @State private var showSportTextField: Bool = false
     @State private var dateOfBirth = Date()
     @State private var showDatePicker = false
     @State private var phoneNumber: String = ""
@@ -29,10 +32,8 @@ struct OnboardingStep1View: View {
     
     // Sample sports list
     private let sports = [
-        "Basketball", "Football", "Baseball", "Soccer", "Tennis", 
-        "Golf", "Swimming", "Track & Field", "Volleyball", "Gymnastics",
-        "Hockey", "Boxing", "MMA", "Wrestling", "Skiing",
-        "Snowboarding", "Skateboarding", "Surfing", "Rugby", "Cricket"
+        "American Football", "Basketball", "Baseball", "Soccer", "Ice Hockey", 
+        "Tennis", "Golf", "Other"
     ]
     
     // Colors
@@ -41,7 +42,13 @@ struct OnboardingStep1View: View {
     
     // Form validation
     private var isFormValid: Bool {
-        selectedAthleteType != nil && !selectedSport.isEmpty && !phoneNumber.isEmpty
+        let sportValid = selectedSport != "Other" ? !selectedSport.isEmpty : !customSport.isEmpty
+        return selectedAthleteType != nil && sportValid && !phoneNumber.isEmpty
+    }
+    
+    // Get the final sport value (either selected or custom)
+    private var finalSportValue: String {
+        return selectedSport == "Other" ? customSport : selectedSport
     }
     
     var body: some View {
@@ -107,28 +114,99 @@ struct OnboardingStep1View: View {
                         .font(.custom("Magistral", size: 16))
                         .foregroundColor(.white.opacity(0.7))
                     
-                    Menu {
-                        ForEach(sports, id: \.self) { sport in
-                            Button(sport) {
-                                selectedSport = sport
+                    ZStack {
+                        // Sport Selection Button
+                        if !showSportTextField {
+                            Button(action: {
+                                showSportsList.toggle()
+                            }) {
+                                HStack {
+                                    Text(selectedSport.isEmpty ? "Sport" : selectedSport)
+                                        .font(.custom("Magistral", size: 16))
+                                        .foregroundColor(selectedSport.isEmpty ? .gray : .white)
+                                        .padding(.leading, 16)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: showSportsList ? "chevron.up" : "chevron.down")
+                                        .foregroundColor(.white.opacity(0.7))
+                                        .padding(.trailing, 16)
+                                }
+                                .frame(height: 56)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
                             }
                         }
-                    } label: {
-                        HStack {
-                            Text(selectedSport.isEmpty ? "Sport" : selectedSport)
-                                .font(.custom("Magistral", size: 16))
-                                .foregroundColor(selectedSport.isEmpty ? .gray : .white)
-                                .padding(.leading, 16)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.down")
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(.trailing, 16)
+                        
+                        // Text field for custom sport if "Other" is selected
+                        if showSportTextField {
+                            HStack {
+                                TextField("", text: $customSport)
+                                    .font(.custom("Magistral", size: 16))
+                                    .foregroundColor(.white)
+                                    .placeholder(when: customSport.isEmpty) {
+                                        Text("Enter your sport")
+                                            .font(.custom("Magistral", size: 16))
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.leading, 16)
+                                
+                                // Button to return to sport selection
+                                Button(action: {
+                                    showSportsList = true
+                                }) {
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.white.opacity(0.7))
+                                        .padding(10)
+                                }
+                                .padding(.trailing, 6)
+                            }
+                            .frame(height: 56)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(8)
                         }
-                        .frame(height: 56)
-                        .background(Color.white.opacity(0.1))
+                    }
+                    
+                    // Custom sports list dropdown
+                    if showSportsList {
+                        VStack(spacing: 0) {
+                            ForEach(sports, id: \.self) { sport in
+                                Button(action: {
+                                    selectedSport = sport
+                                    showSportsList = false
+                                    
+                                    if sport == "Other" {
+                                        showSportTextField = true
+                                    } else {
+                                        showSportTextField = false
+                                        customSport = ""
+                                    }
+                                }) {
+                                    HStack {
+                                        Text(sport)
+                                            .font(.custom("Magistral", size: 16))
+                                            .foregroundColor(.white)
+                                            .padding(.leading, 20)
+                                        Spacer()
+                                    }
+                                    .frame(height: 56)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color(hex: "#1A1A1A"))
+                                }
+                                if sport != sports.last {
+                                    Divider()
+                                        .background(Color.gray.opacity(0.3))
+                                        .padding(.horizontal, 8)
+                                }
+                            }
+                        }
+                        .background(Color(hex: "#1A1A1A"))
                         .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
                     }
                 }
                 .padding(.bottom, 24)
@@ -215,10 +293,10 @@ struct OnboardingStep1View: View {
                 
                 // Continue button
                 Button(action: {
-                    if let athleteType = selectedAthleteType, !selectedSport.isEmpty, !phoneNumber.isEmpty {
+                    if let athleteType = selectedAthleteType, isFormValid {
                         // Format date as string for API
                         let formattedDate = apiDateFormatter.string(from: dateOfBirth)
-                        onContinue(athleteType, selectedSport, formattedDate, phoneNumber)
+                        onContinue(athleteType, finalSportValue, formattedDate, phoneNumber)
                     }
                 }) {
                     HStack {
