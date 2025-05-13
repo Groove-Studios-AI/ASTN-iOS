@@ -114,8 +114,8 @@ class UserSession: ObservableObject {
     
     // MARK: - Onboarding Methods
     
-    /// Update user with athlete type and sport (Step 1)
-    func updateUserStep1(athleteType: AthleteType, sport: String, completion: @escaping (Result<User, Error>) -> Void) {
+    /// Update user with athlete type, sport, date of birth and phone number (Step 1)
+    func updateUserStep1(athleteType: AthleteType, sport: String, dateOfBirth: String, phoneNumber: String, completion: @escaping (Result<User, Error>) -> Void) {
         guard var user = currentUser else {
             completion(.failure(SessionError.noUserLoggedIn))
             return
@@ -124,6 +124,12 @@ class UserSession: ObservableObject {
         // Update local user data first
         user.athleteType = athleteType
         user.sport = sport
+        // Store date of birth and phone number
+        // For a real implementation, we should add these fields to the User model
+        // But for now, we can store them in UserDefaults temporarily
+        UserDefaults.standard.set(dateOfBirth, forKey: "userDateOfBirth")
+        UserDefaults.standard.set(phoneNumber, forKey: "userPhoneNumber")
+        
         user.onboarding.currentStep = 2
         user.onboarding.stepsCompleted = 1
         currentUser = user
@@ -131,6 +137,8 @@ class UserSession: ObservableObject {
         // Send update to API
         apiService.updateUser(userId: user.id, data: ["athleteType": athleteType.rawValue, 
                                                      "sport": sport,
+                                                     "dateOfBirth": dateOfBirth,
+                                                     "phoneNumber": phoneNumber,
                                                      "onboarding": ["currentStep": 2, "stepsCompleted": 1]],
                               token: authToken) { [weak self] result in
             switch result {

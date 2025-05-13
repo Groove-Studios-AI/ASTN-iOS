@@ -1,12 +1,31 @@
 import SwiftUI
+import Combine
 
 struct OnboardingStep1View: View {
     // Callback when the user continues to the next step
-    var onContinue: (AthleteType, String) -> Void
+    var onContinue: (AthleteType, String, String, String) -> Void
     
     // State for selections
     @State private var selectedAthleteType: AthleteType?
     @State private var selectedSport: String = ""
+    @State private var dateOfBirth = Date()
+    @State private var showDatePicker = false
+    @State private var phoneNumber: String = ""
+    
+    // Date formatter for display and API submission
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+    
+    // Date formatter for API
+    private let apiDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
     
     // Sample sports list
     private let sports = [
@@ -22,7 +41,7 @@ struct OnboardingStep1View: View {
     
     // Form validation
     private var isFormValid: Bool {
-        selectedAthleteType != nil && !selectedSport.isEmpty
+        selectedAthleteType != nil && !selectedSport.isEmpty && !phoneNumber.isEmpty
     }
     
     var body: some View {
@@ -112,13 +131,94 @@ struct OnboardingStep1View: View {
                         .cornerRadius(8)
                     }
                 }
+                .padding(.bottom, 24)
                 
-                Spacer()
+                // Date of Birth
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Date of Birth")
+                        .font(.custom("Magistral", size: 16))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    Button(action: {
+                        // Show date picker when field is tapped
+                        showDatePicker = true
+                    }) {
+                        HStack {
+                            Text(dateFormatter.string(from: dateOfBirth))
+                                .font(.custom("Magistral", size: 16))
+                                .foregroundColor(.white)
+                                .padding(.leading, 16)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "calendar")
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.trailing, 16)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+                    
+                    // Date Picker (shown as a sheet when button is tapped)
+                    .sheet(isPresented: $showDatePicker) {
+                        VStack {
+                            HStack {
+                                Button("Cancel") {
+                                    showDatePicker = false
+                                }
+                                .padding()
+                                
+                                Spacer()
+                                
+                                Button("Done") {
+                                    showDatePicker = false
+                                }
+                                .padding()
+                                .bold()
+                            }
+                            
+                            DatePicker("", selection: $dateOfBirth, in: ...Date(), displayedComponents: .date)
+                                .datePickerStyle(WheelDatePickerStyle())
+                                .labelsHidden()
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        }
+                        .background(Color(.systemBackground))
+                        .presentationDetents([.height(300)])
+                    }
+                }
+                .padding(.bottom, 24)
+                
+                // Phone Number
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Phone Number (Password Retrieval)")
+                        .font(.custom("Magistral", size: 16))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    TextField("", text: $phoneNumber)
+                        .font(.custom("Magistral", size: 16))
+                        .foregroundColor(.white)
+                        .placeholder(when: phoneNumber.isEmpty) {
+                            Text("(123) 456-7890")
+                                .font(.custom("Magistral", size: 16))
+                                .foregroundColor(.gray)
+                                .padding(.leading, 16)
+                        }
+                        .padding()
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                        .keyboardType(.phonePad)
+                }
+                .padding(.bottom, 24)
                 
                 // Continue button
                 Button(action: {
-                    if let athleteType = selectedAthleteType, !selectedSport.isEmpty {
-                        onContinue(athleteType, selectedSport)
+                    if let athleteType = selectedAthleteType, !selectedSport.isEmpty, !phoneNumber.isEmpty {
+                        // Format date as string for API
+                        let formattedDate = apiDateFormatter.string(from: dateOfBirth)
+                        onContinue(athleteType, selectedSport, formattedDate, phoneNumber)
                     }
                 }) {
                     HStack {
@@ -158,7 +258,7 @@ struct OnboardingStep1View_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
-            OnboardingStep1View(onContinue: { _, _ in })
+            OnboardingStep1View(onContinue: { _, _, _, _ in })
         }
     }
 }

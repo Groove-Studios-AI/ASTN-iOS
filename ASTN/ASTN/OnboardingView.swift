@@ -20,10 +20,10 @@ struct OnboardingView: View {
                         switch currentStep {
                         case 1:
                             OnboardingStep1View(
-                                onContinue: { athleteType, sport in
+                                onContinue: { athleteType, sport, dateOfBirth, phoneNumber in
                                     // Update user with step 1 data
                                     if let user = userSession.currentUser {
-                                        userSession.updateUserStep1(athleteType: athleteType, sport: sport) { result in
+                                        userSession.updateUserStep1(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber) { result in
                                             switch result {
                                             case .success(_):
                                                 // Navigate to next step
