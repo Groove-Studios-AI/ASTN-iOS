@@ -1,7 +1,5 @@
 import SwiftUI
 import Combine
-
-// Make sure to add this import for the DailyChallengeCardView
 import Foundation
 
 /// The main dashboard view with all features
@@ -60,6 +58,12 @@ struct MainDashboardView: View {
                     onInfoPressed: viewModel.showRewardsInfo
                 )
                 .padding(.horizontal)
+                
+                // Featured games horizontal scrolling list
+                FeaturedGamesListView(
+                    games: viewModel.featuredGames,
+                    onGameSelected: viewModel.selectFeaturedGame
+                )
                 
                 // Latest articles section with horizontal scrolling
                 ArticlesListView(articles: viewModel.articles)

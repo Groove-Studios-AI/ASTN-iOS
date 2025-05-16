@@ -19,6 +19,40 @@ class DashboardViewModel: ObservableObject {
     @Published var dailyChallengeProgress: (Int, Int) = (2, 3)
     @Published var dailyChallengeButtonTitle: String = "Go To Brand Module 3"
     
+    // Featured games data
+    @Published var featuredGames: [FeaturedGame] = [
+        FeaturedGame(
+            title: "GAME OF THE WEEK",
+            gameName: "Attention",
+            iconName: "target",
+            highScore: "11883",
+            difficulty: "17/40",
+            ranking: "19.6%",
+            backgroundColor: "#1E1E1E",
+            gameType: .attention
+        ),
+        FeaturedGame(
+            title: "POPULAR",
+            gameName: "Estimation",
+            iconName: "waveform.path",
+            highScore: "9754",
+            difficulty: "14/40",
+            ranking: "23.7%",
+            backgroundColor: "#1B2D3A",
+            gameType: .estimation
+        ),
+        FeaturedGame(
+            title: "MOST DIFFICULT",
+            gameName: "Brand Builder",
+            iconName: "star.fill",
+            highScore: "8932",
+            difficulty: "24/40",
+            ranking: "8.3%",
+            backgroundColor: "#2D1B3A",
+            gameType: .brandBuilder
+        )
+    ]
+    
     // Sample data - would be fetched from API in real implementation
     @Published var rewards: [RewardItem] = [
         RewardItem(id: "1", title: "Complete 7\nworkouts", isUnlocked: false),
@@ -160,6 +194,24 @@ class DashboardViewModel: ObservableObject {
         // This would fetch real data from APIs
         print("Loading dashboard data")
         // Mock successful load for now
+    }
+    
+    func selectFeaturedGame(_ game: FeaturedGame) {
+        // Navigate to the selected game
+        print("Selected featured game: \(game.gameName)")
+        
+        // Handle navigation based on game type
+        switch game.gameType {
+        case .speedStreak:
+            navigateToWealthWorkout()
+        case .brandBuilder:
+            navigateToBrandWorkout()
+        case .attention, .estimation, .upcoming:
+            // For new game types, we'll navigate to the Reps tab
+            // and then show a coming soon message
+            AppState.shared.navigateToTab(2) // Navigate to Reps tab
+            print("Game \(game.gameName) coming soon!")
+        }
     }
     
     func navigateToDailyChallenge() {
