@@ -47,32 +47,6 @@ struct OnboardingStep2View: View {
             Color.black.edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 0) {
-                // Header with back button and title
-                HStack {
-                    Button(action: {}) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.white)
-                            .font(.system(size: 18, weight: .semibold))
-                    }
-                    .padding(.leading, 8)
-                    
-                    Spacer()
-                    
-                    Text("Sign Up")
-                        .font(.custom("Magistral", size: 20))
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    // Empty space to balance the back button
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(width: 24, height: 24)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 16)
                 
                 // Progress indicator
                 ZStack(alignment: .leading) {
