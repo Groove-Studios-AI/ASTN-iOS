@@ -1,6 +1,9 @@
 import SwiftUI
 import Combine
 
+// Make sure to add this import for the DailyChallengeCardView
+import Foundation
+
 /// The main dashboard view with all features
 struct MainDashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
@@ -24,6 +27,19 @@ struct MainDashboardView: View {
                     onCompleteWorkout: viewModel.completeWorkout
                 )
                 .padding(.horizontal)
+                
+                // Daily challenge card - conditionally shown
+                if viewModel.showDailyChallenge {
+                    DailyChallengeCardView(
+                        challengeTitle: viewModel.dailyChallengeTitle,
+                        progress: viewModel.dailyChallengeProgress,
+                        buttonTitle: viewModel.dailyChallengeButtonTitle,
+                        onButtonPressed: viewModel.navigateToDailyChallenge
+                    )
+                    .padding(.horizontal)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: viewModel.showDailyChallenge)
+                }
                 
                 // Today's workout paths (wealth/brand)
                 WorkoutPathView(

@@ -12,6 +12,12 @@ class DashboardViewModel: ObservableObject {
     @Published var isPerformanceTrackingOptedIn: Bool = false
     @Published var isOwnershipExpanded: Bool = false
     
+    // Daily Challenge Properties
+    @Published var showDailyChallenge: Bool = true
+    @Published var dailyChallengeTitle: String = "You're one Brand module away from unlocking your next performance insight!"
+    @Published var dailyChallengeProgress: (Int, Int) = (2, 3)
+    @Published var dailyChallengeButtonTitle: String = "Go To Brand Module 3"
+    
     // Sample data - would be fetched from API in real implementation
     @Published var rewards: [RewardItem] = [
         RewardItem(id: "1", title: "Complete 7\nworkouts", isUnlocked: false),
@@ -145,10 +151,28 @@ class DashboardViewModel: ObservableObject {
         isOwnershipExpanded.toggle()
     }
     
-    // MARK: - Data loading methods
+    // MARK: - Public Methods
+    
     func loadDashboardData() {
         // This would fetch real data from APIs
         print("Loading dashboard data")
         // Mock successful load for now
+    }
+    
+    func navigateToDailyChallenge() {
+        // In a real app, this would navigate to the appropriate module
+        // For this prototype, we'll just mark the challenge as completed
+        print("Navigating to daily challenge: \(dailyChallengeButtonTitle)")
+        
+        // Simulate completion of challenge
+        completeDailyChallenge()
+    }
+    
+    func completeDailyChallenge() {
+        // Hide the challenge card when completed
+        showDailyChallenge = false
+        
+        // Add points for completing the challenge
+        points += 15
     }
 }
