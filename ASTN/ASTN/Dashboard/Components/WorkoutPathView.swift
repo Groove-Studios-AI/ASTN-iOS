@@ -8,7 +8,8 @@ struct WorkoutPathView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Title and subtitle
             Text("Today's Wealth Workout")
-                .font(.custom("Magistral", size: 20).bold())
+                .font(.custom("Magistral", size: 20, relativeTo: .title3))
+                .fontWeight(.bold)
                 .foregroundColor(.white)
             
             Text("Choose Your Path")
@@ -57,13 +58,18 @@ struct WorkoutOptionButton: View {
                 
                 // Title
                 Text(title)
-                    .font(.custom("Magistral", size: 16).bold())
+                    .font(.custom("Magistral", size: 16, relativeTo: .headline))
+                    .fontWeight(.heavy)
                     .foregroundColor(.white)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(Color.fromHex("#0A4DA2").opacity(0.3))
             .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.fromHex("#F7F5F6"), lineWidth: 1)
+            )
         }
     }
 }
