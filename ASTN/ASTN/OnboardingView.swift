@@ -1,10 +1,13 @@
 import SwiftUI
 
+// Import game preview screens
+import UIKit
+
 struct OnboardingView: View {
     @ObservedObject private var userSession = UserSession.shared
     @State private var currentStep = 1
-    // Total steps increased to 4 to include profile picture step
-    @State private var totalSteps = 4
+    // Total steps increased to 8 to include game preview screens
+    @State private var totalSteps = 8
     
     // Onboarding navigation state
     @Environment(\.presentationMode) var presentationMode
@@ -94,14 +97,50 @@ struct OnboardingView: View {
                                         // In a real app, we'd upload the image to a server
                                         // and update the user's profile picture URL
                                         print("Profile picture selected, would upload to server")
-                                        
-                                        // For now, just complete the onboarding
-                                        AppCoordinator.shared.switchToMainInterface()
-                                    } else {
-                                        // User skipped profile picture
-                                        print("Profile picture skipped")
-                                        AppCoordinator.shared.switchToMainInterface()
                                     }
+                                    // Move to game preview instead of main interface
+                                    withAnimation {
+                                        currentStep = 5
+                                    }
+                                }
+                            )
+                            
+                        case 5:
+                            // Game Preview Intro Screen
+                            GamePreviewIntroView(
+                                onContinue: {
+                                    withAnimation {
+                                        currentStep = 6
+                                    }
+                                }
+                            )
+                            
+                        case 6:
+                            // Game Preview Question Screen
+                            GamePreviewQuestionView(
+                                onContinue: {
+                                    withAnimation {
+                                        currentStep = 7
+                                    }
+                                }
+                            )
+                            
+                        case 7:
+                            // Game Preview Stats Screen
+                            GamePreviewStatsView(
+                                onContinue: {
+                                    withAnimation {
+                                        currentStep = 8
+                                    }
+                                }
+                            )
+                            
+                        case 8:
+                            // Game Preview Plan Screen
+                            GamePreviewPlanView(
+                                onComplete: {
+                                    // Complete onboarding and go to main interface
+                                    AppCoordinator.shared.switchToMainInterface()
                                 }
                             )
                         default:
