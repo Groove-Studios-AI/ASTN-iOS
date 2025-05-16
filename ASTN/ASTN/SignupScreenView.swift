@@ -117,6 +117,7 @@ struct SignupScreenView: View {
                                 .padding()
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
+                                .keyboardType(.emailAddress)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(emailError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)

@@ -11,7 +11,10 @@ import SwiftUI
 struct ASTNApp: App {
     // Initialize any app-level services or state here if needed
     init() {
-        // You can add any app initialization code here
+        // Configure navigation bar appearance to prevent color changes during scrolling
+        UINavigationBar.configureAppearance()
+        
+        // You can add any additional app initialization code here
         // Setup appearance, analytics, etc.
     }
     
