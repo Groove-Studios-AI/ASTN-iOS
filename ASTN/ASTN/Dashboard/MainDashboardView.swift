@@ -71,13 +71,11 @@ struct MainDashboardView: View {
                 // Featured videos section with horizontal scrolling
                 VideosListView(videos: viewModel.videos)
                 
-                // Ownership opportunities section (expandable)
-                OwnershipView(
-                    isExpanded: $viewModel.isOwnershipExpanded,
-                    options: viewModel.ownershipOptions,
-                    onOptionSelected: viewModel.selectOwnershipOption
-                )
-                .padding(.horizontal)
+                // Ownership opportunities section
+                OwnershipView(onTap: {
+                    // Handle tap to open ownership opportunities detail screen
+                    viewModel.showOwnershipOpportunities()
+                })
                 
                 // Safe area for tab bar
                 Spacer(minLength: 100)

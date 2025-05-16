@@ -188,6 +188,14 @@ class DashboardViewModel: ObservableObject {
         isOwnershipExpanded.toggle()
     }
     
+    func showOwnershipOpportunities() {
+        // Handle tap on ownership opportunities card
+        print("Showing ownership opportunities detail screen")
+        // This would navigate to a detail screen with ownership options
+        // For now, we'll just toggle the expanded state for backward compatibility
+        toggleOwnershipExpanded()
+    }
+    
     // MARK: - Public Methods
     
     func loadDashboardData() {
