@@ -8,8 +8,8 @@ struct ProfilePictureView: View {
     
     // State variables
     @State private var selectedImage: UIImage?
-    @State private var isShowingPicker = false
-    @State private var sourceType = UIImagePickerController.SourceType.photoLibrary
+    @State private var isShowingLibraryPicker = false
+    @State private var isShowingCameraPicker = false
     @State private var showCameraAlert = false
     
     // Colors
@@ -93,8 +93,7 @@ struct ProfilePictureView: View {
             if selectedImage == nil {
                 // Upload from library button
                 Button(action: {
-                    sourceType = .photoLibrary
-                    isShowingPicker = true
+                    isShowingLibraryPicker = true
                 }) {
                     HStack {
                         Text("Upload from Library")
@@ -119,8 +118,7 @@ struct ProfilePictureView: View {
                 Button(action: {
                     // Check if camera is available first
                     if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                        sourceType = .camera
-                        isShowingPicker = true
+                        isShowingCameraPicker = true
                     } else {
                         // Show alert if camera is not available
                         showCameraAlert = true
@@ -187,9 +185,13 @@ struct ProfilePictureView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(brandBlack)
-        // Image picker for both camera and photo library
-        .sheet(isPresented: $isShowingPicker) {
-            ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
+        // Photo library picker
+        .sheet(isPresented: $isShowingLibraryPicker) {
+            ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary)
+        }
+        // Camera picker
+        .sheet(isPresented: $isShowingCameraPicker) {
+            ImagePicker(selectedImage: $selectedImage, sourceType: .camera)
         }
     }
 }
