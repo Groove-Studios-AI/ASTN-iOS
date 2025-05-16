@@ -5,6 +5,7 @@ struct MainTabView: View {
     
     // Brand colors
     private let brandBlue = Color.fromHex("#1A2196")
+    private let brandGold = Color.fromHex("#E8D5B5")  // Champagne color
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -28,7 +29,7 @@ struct MainTabView: View {
                 .tabItem {
                     Image("workouts_tabIcon")
                         .renderingMode(.template)
-                    Text("Workouts")
+                    Text("Reps")
                 }
                 .tag(2)
             
@@ -39,7 +40,7 @@ struct MainTabView: View {
                 }
                 .tag(3)
         }
-        .accentColor(brandBlue) // Selected tab color
+        .accentColor(brandGold) // Selected tab color
         .modifier(TabIconModifier()) // Apply our custom tab icon modifier
     }
 }
