@@ -8,9 +8,9 @@ struct ProfilePictureView: View {
     
     // State variables
     @State private var selectedImage: UIImage?
-    @State private var isShowingImagePicker = false
-    @State private var isShowingCamera = false
+    @State private var isShowingPicker = false
     @State private var sourceType = UIImagePickerController.SourceType.photoLibrary
+    @State private var showCameraAlert = false
     
     // Colors
     private let brandBlack = Color.fromHex("#0A0A0A")
@@ -94,7 +94,7 @@ struct ProfilePictureView: View {
                 // Upload from library button
                 Button(action: {
                     sourceType = .photoLibrary
-                    isShowingImagePicker = true
+                    isShowingPicker = true
                 }) {
                     HStack {
                         Text("Upload from Library")
@@ -117,9 +117,13 @@ struct ProfilePictureView: View {
                 
                 // Take a picture button
                 Button(action: {
+                    // Check if camera is available first
                     if UIImagePickerController.isSourceTypeAvailable(.camera) {
                         sourceType = .camera
-                        isShowingCamera = true
+                        isShowingPicker = true
+                    } else {
+                        // Show alert if camera is not available
+                        showCameraAlert = true
                     }
                 }) {
                     Text("Take a Picture")
@@ -134,6 +138,11 @@ struct ProfilePictureView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
+                .alert("Camera Not Available", isPresented: $showCameraAlert) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Your device does not have a camera available or camera access is restricted.")
+                }
             } else {
                 // Looks good! button
                 Button(action: {
@@ -178,12 +187,8 @@ struct ProfilePictureView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(brandBlack)
-        // Image picker from library
-        .sheet(isPresented: $isShowingImagePicker) {
-            ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
-        }
-        // Camera picker
-        .sheet(isPresented: $isShowingCamera) {
+        // Image picker for both camera and photo library
+        .sheet(isPresented: $isShowingPicker) {
             ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
         }
     }
