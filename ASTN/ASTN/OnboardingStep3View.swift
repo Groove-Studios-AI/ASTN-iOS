@@ -76,20 +76,16 @@ struct OnboardingStep3View: View {
                         onContinue(goal)
                     }
                 }) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Text("Continue")
                             .font(.custom("Magistral", size: 18))
                             .fontWeight(.medium)
                             .foregroundColor(.white)
                         
-                        Spacer()
-                        
                         Image(systemName: "arrow.right")
                             .foregroundColor(.white)
                     }
-                    .padding(.horizontal, 24)
-                    .frame(height: 56)
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, minHeight: 56)
                     .background(isFormValid ? brandBlue : brandBlue.opacity(0.5))
                     .cornerRadius(8)
                 }
