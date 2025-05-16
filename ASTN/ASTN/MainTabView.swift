@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab = 0
+    @ObservedObject private var appState = AppState.shared
     
     // Brand colors
     private let brandBlue = Color.fromHex("#1A2196")
     private let brandGold = Color.fromHex("#E8D5B5")  // Champagne color
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $appState.selectedTab) {
             DashboardTabView()
                 .tabItem {
                     Image("dash_tabIcon")

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 class DashboardViewModel: ObservableObject {
     @Published var username: String = "Athlete"
@@ -128,13 +129,15 @@ class DashboardViewModel: ObservableObject {
     }
     
     func navigateToWealthWorkout() {
-        // Navigate to wealth workout
-        print("Navigating to wealth workout")
+        // Navigate to the Reps tab and activate the Speed Streak workout
+        print("Navigating to Speed Streak workout")
+        AppState.shared.navigateToWorkout("Speed Streak")
     }
     
     func navigateToBrandWorkout() {
-        // Navigate to brand workout
-        print("Navigating to brand workout")
+        // Navigate to the Reps tab and activate the Brand Builder workout
+        print("Navigating to Brand Builder workout")
+        AppState.shared.navigateToWorkout("Brand Builder")
     }
     
     func showRewardsInfo() {
