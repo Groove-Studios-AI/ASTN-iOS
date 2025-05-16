@@ -4,6 +4,10 @@
 <dict>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ASTN needs camera access to let you add a profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ASTN needs photo library access to let you select a profile picture.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>magistral.ttf</string>
