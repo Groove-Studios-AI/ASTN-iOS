@@ -197,19 +197,23 @@ class DashboardViewModel: ObservableObject {
     }
     
     func selectFeaturedGame(_ game: FeaturedGame) {
-        // Navigate to the selected game
+        // First navigate to the Reps tab for all featured games
+        AppState.shared.navigateToTab(2)
+        
+        // Log which game was selected
         print("Selected featured game: \(game.gameName)")
         
-        // Handle navigation based on game type
+        // After navigating to the Reps tab, select the appropriate workout if applicable
         switch game.gameType {
         case .speedStreak:
-            navigateToWealthWorkout()
+            // After navigating to Reps tab, activate Speed Streak workout
+            AppState.shared.activeWorkout = "Speed Streak"
         case .brandBuilder:
-            navigateToBrandWorkout()
+            // After navigating to Reps tab, activate Brand Builder workout
+            AppState.shared.activeWorkout = "Brand Builder"
         case .attention, .estimation, .upcoming:
-            // For new game types, we'll navigate to the Reps tab
-            // and then show a coming soon message
-            AppState.shared.navigateToTab(2) // Navigate to Reps tab
+            // These games don't have implementations yet
+            // Just leave the user on the Reps tab
             print("Game \(game.gameName) coming soon!")
         }
     }
