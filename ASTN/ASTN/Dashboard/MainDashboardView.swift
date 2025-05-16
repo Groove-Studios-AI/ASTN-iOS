@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 /// The main dashboard view with all features
 struct MainDashboardView: View {
@@ -25,6 +26,19 @@ struct MainDashboardView: View {
                 )
                 .padding(.horizontal)
                 
+                // Daily challenge card - conditionally shown
+                if viewModel.showDailyChallenge {
+                    DailyChallengeCardView(
+                        challengeTitle: viewModel.dailyChallengeTitle,
+                        progress: viewModel.dailyChallengeProgress,
+                        buttonTitle: viewModel.dailyChallengeButtonTitle,
+                        onButtonPressed: viewModel.navigateToDailyChallenge
+                    )
+                    .padding(.horizontal)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: viewModel.showDailyChallenge)
+                }
+                
                 // Today's workout paths (wealth/brand)
                 WorkoutPathView(
                     onWealthSelected: viewModel.navigateToWealthWorkout,
@@ -44,6 +58,12 @@ struct MainDashboardView: View {
                     onInfoPressed: viewModel.showRewardsInfo
                 )
                 .padding(.horizontal)
+                
+                // Featured games horizontal scrolling list
+                FeaturedGamesListView(
+                    games: viewModel.featuredGames,
+                    onGameSelected: viewModel.selectFeaturedGame
+                )
                 
                 // Latest articles section with horizontal scrolling
                 ArticlesListView(articles: viewModel.articles)

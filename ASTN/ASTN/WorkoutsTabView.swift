@@ -285,7 +285,9 @@ struct WorkoutsTabView: View {
     // Sample data - would come from your data model in production
     @State private var showingRules = false
     @State private var selectedWorkout: WorkoutItem? = nil
-    @State private var activeWorkout: String? = nil
+    
+    // Use the shared app state instead of local state
+    @ObservedObject private var appState = AppState.shared
     
     private let workouts = [
         WorkoutItem(
@@ -327,8 +329,8 @@ struct WorkoutsTabView: View {
                     NavigationLink(
                         destination: SpeedStreakView(),
                         isActive: Binding(
-                            get: { activeWorkout == "Speed Streak" },
-                            set: { if !$0 { activeWorkout = nil } }
+                            get: { appState.activeWorkout == "Speed Streak" },
+                            set: { if !$0 { appState.activeWorkout = nil } }
                         ),
                         label: { EmptyView() }
                     )
@@ -336,8 +338,8 @@ struct WorkoutsTabView: View {
                     NavigationLink(
                         destination: BrandBuilderView(),
                         isActive: Binding(
-                            get: { activeWorkout == "Brand Builder" },
-                            set: { if !$0 { activeWorkout = nil } }
+                            get: { appState.activeWorkout == "Brand Builder" },
+                            set: { if !$0 { appState.activeWorkout = nil } }
                         ),
                         label: { EmptyView() }
                     )
@@ -365,7 +367,7 @@ struct WorkoutsTabView: View {
                                     },
                                     onStartPressed: {
                                         // Navigate to the appropriate workout view
-                                        activeWorkout = workout.title
+                                        appState.activeWorkout = workout.title
                                     },
                                     index: index
                                 )
@@ -401,7 +403,7 @@ struct WorkoutsTabView: View {
                                 // First close the rules panel
                                 showingRules = false
                                 // Then navigate to the appropriate workout
-                                activeWorkout = workout.title
+                                appState.activeWorkout = workout.title
                             }
                         )
                         .transition(.opacity)

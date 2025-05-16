@@ -28,11 +28,11 @@ struct TabIconModifier: ViewModifier {
                     NSAttributedString.Key.font: magistralFont
                 ]
                 
-                // Set selected tab color to brand blue
-                let brandBlueUIColor = UIColor(red: 26/255, green: 33/255, blue: 150/255, alpha: 1.0)
-                itemAppearance.selected.iconColor = brandBlueUIColor
+                // Set selected tab color to champagne/gold
+                let brandGoldUIColor = UIColor(Color.fromHex("#E8D5B5"))
+                itemAppearance.selected.iconColor = brandGoldUIColor
                 itemAppearance.selected.titleTextAttributes = [
-                    NSAttributedString.Key.foregroundColor: brandBlueUIColor,
+                    NSAttributedString.Key.foregroundColor: brandGoldUIColor,
                     NSAttributedString.Key.font: magistralFont
                 ]
                 
@@ -44,7 +44,7 @@ struct TabIconModifier: ViewModifier {
                 // Directly apply the appearance to ensure color settings are used
                 UITabBar.appearance().standardAppearance = tabBarAppearance
                 UITabBar.appearance().unselectedItemTintColor = .white
-                UITabBar.appearance().tintColor = brandBlueUIColor
+                UITabBar.appearance().tintColor = brandGoldUIColor
                 
                 if #available(iOS 15.0, *) {
                     UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance

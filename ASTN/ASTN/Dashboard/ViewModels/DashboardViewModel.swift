@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 class DashboardViewModel: ObservableObject {
     @Published var username: String = "Athlete"
@@ -11,6 +12,46 @@ class DashboardViewModel: ObservableObject {
     
     @Published var isPerformanceTrackingOptedIn: Bool = false
     @Published var isOwnershipExpanded: Bool = false
+    
+    // Daily Challenge Properties
+    @Published var showDailyChallenge: Bool = true
+    @Published var dailyChallengeTitle: String = "You're one Brand module away from unlocking your next performance insight!"
+    @Published var dailyChallengeProgress: (Int, Int) = (2, 3)
+    @Published var dailyChallengeButtonTitle: String = "Go To Brand Module 3"
+    
+    // Featured games data
+    @Published var featuredGames: [FeaturedGame] = [
+        FeaturedGame(
+            title: "GAME OF THE WEEK",
+            gameName: "Attention",
+            iconName: "target",
+            highScore: "11883",
+            difficulty: "17/40",
+            ranking: "19.6%",
+            backgroundColor: "#1E1E1E",
+            gameType: .attention
+        ),
+        FeaturedGame(
+            title: "POPULAR",
+            gameName: "Estimation",
+            iconName: "waveform.path",
+            highScore: "9754",
+            difficulty: "14/40",
+            ranking: "23.7%",
+            backgroundColor: "#1B2D3A",
+            gameType: .estimation
+        ),
+        FeaturedGame(
+            title: "MOST DIFFICULT",
+            gameName: "Brand Builder",
+            iconName: "star.fill",
+            highScore: "8932",
+            difficulty: "24/40",
+            ranking: "8.3%",
+            backgroundColor: "#2D1B3A",
+            gameType: .brandBuilder
+        )
+    ]
     
     // Sample data - would be fetched from API in real implementation
     @Published var rewards: [RewardItem] = [
@@ -122,13 +163,15 @@ class DashboardViewModel: ObservableObject {
     }
     
     func navigateToWealthWorkout() {
-        // Navigate to wealth workout
-        print("Navigating to wealth workout")
+        // Navigate to the Reps tab and activate the Speed Streak workout
+        print("Navigating to Speed Streak workout")
+        AppState.shared.navigateToWorkout("Speed Streak")
     }
     
     func navigateToBrandWorkout() {
-        // Navigate to brand workout
-        print("Navigating to brand workout")
+        // Navigate to the Reps tab and activate the Brand Builder workout
+        print("Navigating to Brand Builder workout")
+        AppState.shared.navigateToWorkout("Brand Builder")
     }
     
     func showRewardsInfo() {
@@ -145,10 +188,50 @@ class DashboardViewModel: ObservableObject {
         isOwnershipExpanded.toggle()
     }
     
-    // MARK: - Data loading methods
+    // MARK: - Public Methods
+    
     func loadDashboardData() {
         // This would fetch real data from APIs
         print("Loading dashboard data")
         // Mock successful load for now
+    }
+    
+    func selectFeaturedGame(_ game: FeaturedGame) {
+        // First navigate to the Reps tab for all featured games
+        AppState.shared.navigateToTab(2)
+        
+        // Log which game was selected
+        print("Selected featured game: \(game.gameName)")
+        
+        // After navigating to the Reps tab, select the appropriate workout if applicable
+        switch game.gameType {
+        case .speedStreak:
+            // After navigating to Reps tab, activate Speed Streak workout
+            AppState.shared.activeWorkout = "Speed Streak"
+        case .brandBuilder:
+            // After navigating to Reps tab, activate Brand Builder workout
+            AppState.shared.activeWorkout = "Brand Builder"
+        case .attention, .estimation, .upcoming:
+            // These games don't have implementations yet
+            // Just leave the user on the Reps tab
+            print("Game \(game.gameName) coming soon!")
+        }
+    }
+    
+    func navigateToDailyChallenge() {
+        // In a real app, this would navigate to the appropriate module
+        // For this prototype, we'll just mark the challenge as completed
+        print("Navigating to daily challenge: \(dailyChallengeButtonTitle)")
+        
+        // Simulate completion of challenge
+        completeDailyChallenge()
+    }
+    
+    func completeDailyChallenge() {
+        // Hide the challenge card when completed
+        showDailyChallenge = false
+        
+        // Add points for completing the challenge
+        points += 15
     }
 }
