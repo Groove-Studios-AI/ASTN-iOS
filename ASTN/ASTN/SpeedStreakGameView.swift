@@ -7,10 +7,18 @@ struct FinancialTerm: Identifiable {
     let correctDefinition: String
     let wrongDefinitions: [String]
     
+    // Original function for backward compatibility
     var allDefinitions: [String] {
         var definitions = wrongDefinitions
         definitions.append(correctDefinition)
         return definitions.shuffled()
+    }
+    
+    // Get exactly two options for the design
+    var twoOptions: [String] {
+        // Get first wrong definition or use a default if empty
+        let wrongOption = wrongDefinitions.first ?? "Unknown"
+        return [correctDefinition, wrongOption].shuffled()
     }
 }
 
@@ -20,19 +28,21 @@ struct SpeedStreakGameView: View {
     @State private var points = 0
     @State private var currentQuestionIndex = 0
     @State private var selectedAnswer: String? = nil
+    @State private var answerStartTime: Date? = nil
     @State private var isCorrect = false
     @State private var showingFeedback = false
     @State private var speedBonus = 0
-    @State private var carPosition: CGFloat = 0
-    @State private var answerStartTime: Date? = nil
+    @State private var speedyAnswersCount = 0
     @State private var isAnimating = false
+    @State private var carPosition: CGFloat = 0
+    @State private var remainingLives = 4 // Starting lives
     
     // Demo questions (these would come from your data model in production)
     private let questions = [
         FinancialTerm(
             term: "NIL",
-            correctDefinition: "Net Income Loss",
-            wrongDefinitions: ["Name, Image, Likeness", "National Investment League", "Non-Interest Liability"]
+            correctDefinition: "Name, Image, Likeness",
+            wrongDefinitions: ["Net Income Loss", "National Investment League", "Non-Interest Liability"]
         ),
         FinancialTerm(
             term: "APR",
@@ -72,22 +82,33 @@ struct SpeedStreakGameView: View {
             
             // Main content
             VStack(spacing: 0) {
-                // Points display
-                HStack {
-                    Text("\(points) POINTS")
-                        .font(.custom("Magistral", size: 18))
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    // Three dots (menu placeholder)
-                    HStack(spacing: 8) {
-                        ForEach(0..<3, id: \.self) { _ in
-                            Circle()
-                                .fill(brandGold)
-                                .frame(width: 30, height: 30)
+                // Enhanced header with points and title
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("\(points) Points")
+                            .font(.custom("Magistral", size: 18))
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        // Blue dots progress indicator
+                        HStack(spacing: 6) {
+                            ForEach(0..<5, id: \.self) { index in
+                                Circle()
+                                    .fill(index < currentQuestionIndex + 1 ? brandBlue : brandBlue.opacity(0.3))
+                                    .frame(width: 20, height: 20)
+                            }
                         }
+                    }
+                    
+                    HStack {
+                        Text("Brand Readiness")
+                            .font(.custom("Magistral", size: 24))
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        
+                        Spacer()
                     }
                 }
                 .padding(.horizontal, 20)
@@ -96,42 +117,44 @@ struct SpeedStreakGameView: View {
                 
                 Spacer()
                 
-                // Question and answer area
-                VStack(spacing: 30) {
+                // Question and answer area - styled for design
+                VStack(spacing: 40) {
                     Text("Define this term")
                         .font(.custom("Magistral", size: 18))
                         .foregroundColor(.white)
+                        .padding(.top, 20)
                     
                     Text(currentQuestion.term)
-                        .font(.custom("Magistral", size: 32))
+                        .font(.custom("Magistral", size: 40)) // Larger font per design
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 40) // More spacing per design
                     
-                    // Answer choices
-                    VStack(spacing: 12) {
-                        ForEach(currentQuestion.allDefinitions, id: \.self) { definition in
+                    // Answer choices - only 2 per design matching screenshot
+                    VStack(spacing: 20) { // Increased spacing between options
+                        ForEach(currentQuestion.twoOptions, id: \.self) { definition in
                             Button(action: {
-                                if answerStartTime == nil {
-                                    answerStartTime = Date()
-                                }
-                                
                                 checkAnswer(definition)
                             }) {
                                 Text(definition)
                                     .font(.custom("Magistral", size: 18))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.white) // Always white text
                                     .padding(.vertical, 16)
-                                    .padding(.horizontal, 20)
+                                    .frame(maxWidth: .infinity)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(brandGold, lineWidth: 1) // Thinner gold border
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .fill(Color.black) // Black background
+                                            )
                                     )
                             }
-                            .disabled(showingFeedback)
+                            .disabled(selectedAnswer != nil)
                         }
                     }
+                    .padding(.top, 20) // More space between term and options
                     .padding(.horizontal, 20)
                 }
                 
@@ -175,74 +198,94 @@ struct SpeedStreakGameView: View {
                 }
             }
             
-            // Progress indicator (right side vertical track)
-            ZStack(alignment: .trailing) {
-                HStack {
-                    Spacer()
+            // Position the ProgressTrackView at the trailing edge
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    Spacer() // Push to trailing edge
                     
-                    ZStack(alignment: .bottom) {
-                        // Track
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 2)
-                            .padding(.vertical, 70)
-                        
-                        // Up arrow indicator
-                        Image(systemName: "arrowtriangle.up.fill")
-                            .foregroundColor(.gray.opacity(0.4))
-                            .offset(y: -60)
-                        
-                        // Down arrow indicator
-                        Image(systemName: "arrowtriangle.down.fill")
-                            .foregroundColor(.gray.opacity(0.4))
-                            .offset(y: 60)
-                        
-                        // F1 Car - moves up with correct answers
-                        HStack {
-                            // Car body
-                            ZStack {
-                                // Main body (beige)
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(brandGold)
-                                    .frame(width: 40, height: 24)
-                                
-                                // Blue stripe
-                                Rectangle()
-                                    .fill(brandBlue)
-                                    .frame(width: 36, height: 4)
-                            }
-                            
-                            // Animation effect for correct answers
-                            if isAnimating && isCorrect {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(brandBlue)
-                                    .frame(width: 20, height: 40)
-                                    .offset(x: -10)
-                            }
-                        }
-                        .offset(y: -carPosition) // Position determined by progress
-                        .animation(.spring(response: 0.6), value: carPosition)
-                    }
-                    .frame(height: UIScreen.main.bounds.height * 0.6)
-                    .padding(.trailing, 20)
+                    // Progress track with asset images
+                    ProgressTrackView(
+                        progress: CGFloat(currentQuestionIndex) / CGFloat(max(1, questions.count - 1)),
+                        isAnimating: isAnimating
+                    )
+                    .frame(height: geometry.size.height * 1.0) // Match the parent height
+                    .padding(.trailing, 10) // Slight padding from edge
+                    .padding(.top, -30) // Adjust to align with blue dots
                 }
+            }
+            
+            // MARK: - End Game Screens Overlay
+            if flowCoordinator.currentScreen != .none {
+                ZStack {
+                    // Full screen black overlay
+                    Color.black.edgesIgnoringSafeArea(.all)
+                    
+                    // Game result screen
+                    if flowCoordinator.currentScreen == .results, let result = flowCoordinator.gameResult {
+                        GameResultView(
+                            score: result.score,
+                            speedyAnswers: result.speedyAnswers,
+                            livesRemaining: result.livesRemaining,
+                            gameType: result.gameType,
+                            onContinue: { flowCoordinator.showInvestment() }
+                        )
+                    }
+                    
+                    // Investment opportunity screen
+                    else if flowCoordinator.currentScreen == .investment, let investment = flowCoordinator.investmentOffer {
+                        InvestmentOpportunityView(
+                            investment: investment,
+                            onDecline: { flowCoordinator.promptDeclineConfirmation() },
+                            onInquire: { flowCoordinator.inquireAboutInvestment() },
+                            showDeclineConfirmation: $flowCoordinator.showDeclineConfirmation
+                        )
+                    }
+                    
+                    // Premium upsell screen
+                    else if flowCoordinator.currentScreen == .premium {
+                        PremiumUpsellView(
+                            onReturnHome: { flowCoordinator.returnHome() },
+                            onUnlockPremium: { flowCoordinator.unlockPremium() }
+                        )
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(100) // Ensure it's on top of everything
             }
         }
         .navigationBarTitle("", displayMode: .inline)
         .navigationBarItems(leading: Button(action: {
             presentationMode.wrappedValue.dismiss()
         }) {
-            Image(systemName: "chevron.left")
-                .foregroundColor(.white)
+            HStack {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(brandGold)
+                Text("Back")
+                    .foregroundColor(brandGold)
+                    .font(.custom("Magistral", size: 18))
+            }
         })
         .onAppear {
-            // Start the first question timer
+            // Start timer for first question when view appears
             answerStartTime = Date()
+        }
+        // Navigate back to dashboard when flowCoordinator says to return home
+        .onChange(of: flowCoordinator.currentScreen) { newScreen in
+            if newScreen == .none {
+                // This dismisses the current view to go back to the dashboard
+                presentationMode.wrappedValue.dismiss()
+            }
         }
     }
     
+    // MARK: - Game Flow Coordinator
+    @StateObject private var flowCoordinator = GameFlowCoordinator()
     // Check if the selected answer is correct
     private func checkAnswer(_ selectedDefinition: String) {
+        // Prevent multiple selections for the same question
+        guard selectedAnswer == nil else { return }
+        
+        // Set the selected answer and check if correct
         selectedAnswer = selectedDefinition
         isCorrect = (selectedDefinition == currentQuestion.correctDefinition)
         
@@ -253,8 +296,10 @@ struct SpeedStreakGameView: View {
             // Award speed bonus based on response time
             if timeTaken < 2.0 {
                 speedBonus = 5
+                speedyAnswersCount += 1
             } else if timeTaken < 4.0 {
                 speedBonus = 3
+                speedyAnswersCount += 1
             } else if timeTaken < 6.0 {
                 speedBonus = 1
             } else {
@@ -264,12 +309,11 @@ struct SpeedStreakGameView: View {
             // Add points
             points += 10 + speedBonus
             
-            // Animate the car movement
+            // Update progress value (still using carPosition for state tracking)
+            // This will now be used by the ProgressTrackView through the progress ratio calculation
             withAnimation {
                 isAnimating = true
-                // Move the car up based on progress through questions
-                let progressPerQuestion = UIScreen.main.bounds.height * 0.45 / CGFloat(questions.count)
-                carPosition += progressPerQuestion
+                carPosition = CGFloat(currentQuestionIndex + 1) // Increment progress counter
             }
         }
         
@@ -278,20 +322,38 @@ struct SpeedStreakGameView: View {
             showingFeedback = true
         }
         
-        // After a delay, move to the next question
+        // After a delay, move to the next question or finish game
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             if currentQuestionIndex < questions.count - 1 {
                 withAnimation {
                     showingFeedback = false
                     isAnimating = false
+                    selectedAnswer = nil // Reset selected answer
                     currentQuestionIndex += 1
                     answerStartTime = Date() // Reset timer for next question
                 }
             } else {
-                // Game is over, handle completion
-                // For now, just stay on the success message
+                // Game is over, show game result screen
+                withAnimation {
+                    showingFeedback = false
+                }
+                finishGame()
             }
         }
+    }
+    
+    // Called when the game is complete
+    private func finishGame() {
+        // Create game result
+        let result = GameResult(
+            score: points,
+            speedyAnswers: speedyAnswersCount,
+            livesRemaining: 4, // Placeholder - could be dynamic based on game state
+            gameType: .speedStreak
+        )
+        
+        // Trigger game completion in flow coordinator
+        flowCoordinator.completeGame(result: result)
     }
 }
 

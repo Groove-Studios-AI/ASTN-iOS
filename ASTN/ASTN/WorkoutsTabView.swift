@@ -157,32 +157,11 @@ struct BrandBuilderView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                Text("Brand Builder Workout")
-                    .font(.custom("Magistral", size: 24))
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                
-                Text("Workout content will go here")
-                    .font(.custom("Magistral", size: 18))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Text("Back to Workouts")
-                        .font(.custom("Magistral", size: 16))
-                        .foregroundColor(Color.fromHex("#0A0A0A"))
-                        .padding()
-                        .background(Color.fromHex("#E8D5B5"))
-                        .cornerRadius(8)
-                }
-            }
-        }
-        .navigationBarTitle("Brand Builder", displayMode: .inline)
+        // We're using the BrandBuilderGameView directly
+        // which contains all game logic and UI
+        BrandBuilderGameView()
+            .navigationBarTitle("Brand Builder", displayMode: .inline)
+            .navigationBarBackButtonHidden(true)
     }
 }
 
