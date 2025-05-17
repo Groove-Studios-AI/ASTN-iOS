@@ -198,16 +198,17 @@ struct SpeedStreakGameView: View {
             
             // Position the ProgressTrackView at the trailing edge
             GeometryReader { geometry in
-                HStack {
+                HStack(spacing: 0) {
                     Spacer() // Push to trailing edge
                     
-                    // Progress visualization with money bag animation
+                    // Extended progress track with proper vertical spacing
                     ProgressTrackView(
                         progress: CGFloat(currentQuestionIndex) / CGFloat(max(1, questions.count - 1)),
                         isAnimating: isAnimating
                     )
-                    .frame(height: geometry.size.height * 0.9)
-                    .padding(.trailing, 5) // Less padding to match screenshot
+                    .frame(height: geometry.size.height * 1.1) // Slightly taller to ensure dotted line extends properly
+                    .padding(.trailing, 5) // Minimal padding from edge
+                    .padding(.top, -50) // Pull track up to align with blue dots
                 }
             }
         }
