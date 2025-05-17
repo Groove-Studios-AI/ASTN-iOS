@@ -29,13 +29,13 @@ struct OwnershipView: View {
                         .fill(cardBackground)
                     
                     // Content container
-                    VStack(spacing: 15) {
-                        // Dollar icon with dual circle design
+                    VStack(spacing: 0) { // Remove default spacing to control precise spacing
+                        // Dollar icon with dual ellipse design
                         ZStack {
-                            // Outer circle
-                            Circle()
+                            // Outer ellipse
+                            Ellipse()
                                 .fill(iconBackground)
-                                .frame(width: 60, height: 60)
+                                .frame(width: 65, height: 55)
                             
                             // Dollar sign with inner circle
                             Image(systemName: "dollarsign.circle.fill")
@@ -44,19 +44,21 @@ struct OwnershipView: View {
                                 .foregroundColor(iconPurple)
                                 .frame(width: 34, height: 34)
                         }
-                        .padding(.top, 20)
+                        .padding(.top, 8) // 8px from top of purple view
                         
-                        // Title and description
+                        // Title and description - 13px spacing from dollar sign
                         VStack(spacing: 8) {
                             Text("Ownership Opportunities")
                                 .font(.custom("Magistral", size: 22).bold())
                                 .foregroundColor(primaryText)
                                 .multilineTextAlignment(.center)
+                                .padding(.top, 13) // 13px spacing from dollar sign
                             
                             Text("Discover ways to build lasting wealth\nthrough ownership")
                                 .font(.custom("Magistral", size: 15))
                                 .foregroundColor(secondaryText)
                                 .multilineTextAlignment(.center)
+                                .lineSpacing(6) // Approximately 1.5x line spacing
                                 .lineLimit(2)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -64,11 +66,11 @@ struct OwnershipView: View {
                         
                         Spacer()
                         
-                        // Call to action at bottom
+                        // Call to action at bottom with 12px from bottom edge
                         Text("Tap to explore options")
                             .font(.custom("Magistral", size: 16))
                             .foregroundColor(accentGold)
-                            .padding(.bottom, 20)
+                            .padding(.bottom, 12)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 180) // Fixed height for consistency
