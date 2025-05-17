@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788" systemVersion="24E263" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="GamePerformanceEntity" representedClassName="GamePerformanceEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="avgAccuracy" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="avgBalanceTime" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="highScore" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="instabilityEvents" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="lastPlayed" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="totalAttempts" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="module" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ModuleEntity" inverseName="gamePerformances" inverseEntity="ModuleEntity"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="gamePerformances" inverseEntity="UserEntity"/>
+    </entity>
+    <entity name="ModuleContentEntity" representedClassName="ModuleContentEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="contentText" optional="YES" attributeType="String"/>
+        <attribute name="contentType" optional="YES" attributeType="String"/>
+        <attribute name="correctAnswer" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="mediaUrl" optional="YES" attributeType="String"/>
+        <attribute name="options" optional="YES" attributeType="Transformable"/>
+        <attribute name="order" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="questionText" optional="YES" attributeType="String"/>
+        <relationship name="module" maxCount="1" deletionRule="Nullify" destinationEntity="ModuleEntity" inverseName="contents" inverseEntity="ModuleEntity"/>
+    </entity>
+    <entity name="ModuleEntity" representedClassName="ModuleEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="bonusPoints" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="contentCount" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="difficulty" optional="YES" attributeType="String"/>
+        <attribute name="durationMinutes" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="iconType" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="moduleDescription" optional="YES" attributeType="String"/>
+        <attribute name="points" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <relationship name="contents" toMany="YES" deletionRule="Nullify" destinationEntity="ModuleContentEntity" inverseName="module" inverseEntity="ModuleContentEntity"/>
+        <relationship name="gamePerformances" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="GamePerformanceEntity" inverseName="module" inverseEntity="GamePerformanceEntity"/>
+        <relationship name="progressRecords" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ModuleProgressEntity" inverseName="module" inverseEntity="ModuleProgressEntity"/>
+        <relationship name="quizResults" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="QuizResultEntity" inverseName="module" inverseEntity="QuizResultEntity"/>
+    </entity>
+    <entity name="ModuleProgressEntity" representedClassName="ModuleProgressEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="completedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="duration" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="lastContentIndex" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="outcome" optional="YES" attributeType="String"/>
+        <attribute name="score" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="startTime" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="module" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ModuleEntity" inverseName="progressRecords" inverseEntity="ModuleEntity"/>
+        <relationship name="user" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="moduleProgresses" inverseEntity="UserEntity"/>
+    </entity>
+    <entity name="QuizResultEntity" representedClassName="QuizResultEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="completedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="questionsCorrect" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="questionsTotal" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="score" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="module" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ModuleEntity" inverseName="quizResults" inverseEntity="ModuleEntity"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="quizResults" inverseEntity="UserEntity"/>
+    </entity>
+    <entity name="RewardEntity" representedClassName="RewardEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageUrl" optional="YES" attributeType="String"/>
+        <attribute name="pointsCost" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="rewardDescription" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="unlockCriteria" optional="YES" attributeType="String"/>
+        <relationship name="redemptions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="RewardRedemptionEntity" inverseName="reward" inverseEntity="RewardRedemptionEntity"/>
+    </entity>
+    <entity name="RewardRedemptionEntity" representedClassName="RewardRedemptionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="pointsCostAtRedemption" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="redeemedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="achievement" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserAchievementEntity" inverseName="redemptions" inverseEntity="UserAchievementEntity"/>
+        <relationship name="reward" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="RewardEntity" inverseName="redemptions" inverseEntity="RewardEntity"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="rewards" inverseEntity="UserEntity"/>
+    </entity>
+    <entity name="UserAchievementEntity" representedClassName="UserAchievementEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="burnRate" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="currentBalance" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="lastEarnedTimestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="totalPointsEarned" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="redemptions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="RewardRedemptionEntity" inverseName="achievement" inverseEntity="RewardRedemptionEntity"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="achievements" inverseEntity="UserEntity"/>
+    </entity>
+    <entity name="UserEntity" representedClassName="UserEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authMethod" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isActive" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="lastActive" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="phoneNumber" optional="YES" attributeType="String"/>
+        <attribute name="username" optional="YES" attributeType="String"/>
+        <relationship name="achievements" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserAchievementEntity" inverseName="user" inverseEntity="UserAchievementEntity"/>
+        <relationship name="gamePerformances" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="GamePerformanceEntity" inverseName="user" inverseEntity="GamePerformanceEntity"/>
+        <relationship name="moduleProgresses" toMany="YES" deletionRule="Nullify" destinationEntity="ModuleProgressEntity" inverseName="user" inverseEntity="ModuleProgressEntity"/>
+        <relationship name="profile" maxCount="1" deletionRule="Nullify" destinationEntity="UserProfileEntity" inverseName="user" inverseEntity="UserProfileEntity"/>
+        <relationship name="quizResults" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="QuizResultEntity" inverseName="user" inverseEntity="QuizResultEntity"/>
+        <relationship name="rewards" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="RewardRedemptionEntity" inverseName="user" inverseEntity="RewardRedemptionEntity"/>
+    </entity>
+    <entity name="UserProfileEntity" representedClassName="UserProfileEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="accountTier" optional="YES" attributeType="String"/>
+        <attribute name="age" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="athleteType" optional="YES" attributeType="String"/>
+        <attribute name="churnRisk" optional="YES" attributeType="Float" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="city" optional="YES" attributeType="String"/>
+        <attribute name="country" optional="YES" attributeType="String"/>
+        <attribute name="currentStage" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="interests" optional="YES" attributeType="Transformable"/>
+        <attribute name="level" optional="YES" attributeType="String"/>
+        <attribute name="mindsetProfile" optional="YES" attributeType="String"/>
+        <attribute name="position" optional="YES" attributeType="String"/>
+        <attribute name="preferredContentType" optional="YES" attributeType="String"/>
+        <attribute name="sessionFrequency" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="skillLevels" optional="YES" attributeType="Transformable"/>
+        <attribute name="sport" optional="YES" attributeType="String"/>
+        <attribute name="state" optional="YES" attributeType="String"/>
+        <attribute name="streakDays" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="yearsAtLevel" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="user" maxCount="1" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="profile" inverseEntity="UserEntity"/>
+    </entity>
+</model>

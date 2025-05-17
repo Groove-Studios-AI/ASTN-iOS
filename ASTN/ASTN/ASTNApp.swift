@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import CoreData
 
 @main
 struct ASTNApp: App {
+    // Initialize the PersistenceController
+    let persistenceController = PersistenceController.shared
+
     // Initialize any app-level services or state here if needed
     init() {
         // Configure navigation bar appearance to prevent color changes during scrolling
@@ -22,6 +26,7 @@ struct ASTNApp: App {
         WindowGroup {
             // Start with SplashScreenView, but enable navigation replacement via AppCoordinator
             SplashScreenView()
+                .environment(\.managedObjectContext, persistenceController.container.viewContext) // Inject context
                 .onAppear {
                     // Initialize the AppCoordinator (ensures singleton is created)
                     _ = AppCoordinator.shared
