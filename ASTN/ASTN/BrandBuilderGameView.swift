@@ -29,6 +29,12 @@ struct BrandBuilderGameView: View {
     @State private var isCorrect = false
     @State private var showingFeedback = false
     @State private var showingNextQuestion = false
+    @State private var answerStartTime: Date? = nil
+    @State private var speedyAnswersCount = 0
+    @State private var remainingLives = 4 // Starting lives
+    
+    // MARK: - Game Flow Coordinator
+    @StateObject private var flowCoordinator = GameFlowCoordinator()
     
     // Brand colors
     private let brandBlack = Color.fromHex("#0A0A0A")
@@ -212,6 +218,45 @@ struct BrandBuilderGameView: View {
                     .padding(.bottom, 20)
                 }
             }
+            
+            // MARK: - End Game Screens Overlay
+            if flowCoordinator.currentScreen != .none {
+                ZStack {
+                    // Full screen black overlay
+                    Color.black.edgesIgnoringSafeArea(.all)
+                    
+                    // Game result screen
+                    if flowCoordinator.currentScreen == .results, let result = flowCoordinator.gameResult {
+                        GameResultView(
+                            score: result.score,
+                            speedyAnswers: result.speedyAnswers,
+                            livesRemaining: result.livesRemaining,
+                            gameType: result.gameType,
+                            onContinue: { flowCoordinator.showInvestment() }
+                        )
+                    }
+                    
+                    // Investment opportunity screen
+                    else if flowCoordinator.currentScreen == .investment, let investment = flowCoordinator.investmentOffer {
+                        InvestmentOpportunityView(
+                            investment: investment,
+                            onDecline: { flowCoordinator.promptDeclineConfirmation() },
+                            onInquire: { flowCoordinator.inquireAboutInvestment() },
+                            showDeclineConfirmation: $flowCoordinator.showDeclineConfirmation
+                        )
+                    }
+                    
+                    // Premium upsell screen
+                    else if flowCoordinator.currentScreen == .premium {
+                        PremiumUpsellView(
+                            onReturnHome: { flowCoordinator.returnHome() },
+                            onUnlockPremium: { flowCoordinator.unlockPremium() }
+                        )
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(100) // Ensure it's on top of everything
+            }
         }
         .navigationBarTitle("Brand Builder", displayMode: .inline)
         .navigationBarItems(leading: Button(action: {
@@ -223,6 +268,17 @@ struct BrandBuilderGameView: View {
             }
             .foregroundColor(brandGold)
         })
+        .onAppear {
+            // Start timer for first question when view appears
+            answerStartTime = Date()
+        }
+        // Navigate back to dashboard when flowCoordinator says to return home
+        .onChange(of: flowCoordinator.currentScreen) { newScreen in
+            if newScreen == .none {
+                // This dismisses the current view to go back to the dashboard
+                presentationMode.wrappedValue.dismiss()
+            }
+        }
     }
     
     // Check if the selected answer is correct
@@ -233,13 +289,21 @@ struct BrandBuilderGameView: View {
         selectedAnswer = option
         isCorrect = option == currentQuestion.correctAnswer
         
-        withAnimation {
-            showingFeedback = true
+        // Calculate speed bonus if correct (based on response time)
+        if isCorrect, let startTime = answerStartTime {
+            let timeTaken = Date().timeIntervalSince(startTime)
+            
+            // Award points and track speedy answers
+            points += 10
+            
+            // Count speedy answers (under 4 seconds)
+            if timeTaken < 4.0 {
+                speedyAnswersCount += 1
+            }
         }
         
-        // Award points for correct answer
-        if isCorrect {
-            points += 10
+        withAnimation {
+            showingFeedback = true
         }
         
         // Show next question button after a short delay
@@ -258,15 +322,31 @@ struct BrandBuilderGameView: View {
             showingFeedback = false
             showingNextQuestion = false
             
+            // Reset timer for next question
+            answerStartTime = Date()
+            
             // Go to next question or end game
             if currentQuestionIndex < questions.count - 1 {
                 currentQuestionIndex += 1
             } else {
-                // Game is complete, handle completion
-                // This could navigate to a results screen or dismiss back to workouts
-                presentationMode.wrappedValue.dismiss()
+                // Game is complete, show the end-game flow
+                finishGame()
             }
         }
+    }
+    
+    // Called when the game is complete to show end-game screens
+    private func finishGame() {
+        // Create game result
+        let result = GameResult(
+            score: points,
+            speedyAnswers: speedyAnswersCount,
+            livesRemaining: remainingLives,
+            gameType: .brandBuilder
+        )
+        
+        // Trigger game completion in flow coordinator
+        flowCoordinator.completeGame(result: result)
     }
 }
 
