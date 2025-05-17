@@ -12,6 +12,7 @@ class DashboardViewModel: ObservableObject {
     
     @Published var isPerformanceTrackingOptedIn: Bool = false
     @Published var isOwnershipExpanded: Bool = false
+    @Published var showComingSoonModal: Bool = false
     
     // Daily Challenge Properties
     @Published var showDailyChallenge: Bool = true
@@ -189,11 +190,11 @@ class DashboardViewModel: ObservableObject {
     }
     
     func showOwnershipOpportunities() {
-        // Handle tap on ownership opportunities card
-        print("Showing ownership opportunities detail screen")
-        // This would navigate to a detail screen with ownership options
-        // For now, we'll just toggle the expanded state for backward compatibility
-        toggleOwnershipExpanded()
+        // Show the coming soon modal when ownership view is tapped
+        print("Showing ownership opportunities coming soon modal")
+        withAnimation {
+            showComingSoonModal = true
+        }
     }
     
     // MARK: - Public Methods

@@ -83,6 +83,13 @@ struct MainDashboardView: View {
         }
         .background(Color.fromHex("#0A0A0A"))
         .edgesIgnoringSafeArea(.bottom)
+        .overlay(
+            ZStack {
+                if viewModel.showComingSoonModal {
+                    OwnershipModal(isPresented: $viewModel.showComingSoonModal)
+                }
+            }
+        )
         .onAppear {
             viewModel.loadDashboardData()
         }
