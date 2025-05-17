@@ -16,7 +16,7 @@ struct ArticlesListView: View {
                 HStack(spacing: 16) {
                     ForEach(articles) { article in
                         ArticleCardView(article: article)
-                            .frame(width: 270)
+                            .frame(width: 170) // 63% of the original width (270px)
                     }
                 }
                 .padding(.horizontal)
