@@ -159,8 +159,10 @@ class DashboardViewModel: ObservableObject {
     // MARK: - Action Methods
     
     func completeWorkout() {
-        // In a real app, this would navigate to workout screen
-        print("Navigating to workout completion flow")
+        // Navigate to the Reps tab (index 2)
+        print("Navigating to Reps tab for workout completion")
+        // Use the AppState to handle tab navigation
+        AppState.shared.navigateToTab(2) // Navigate to the Reps tab
     }
     
     func navigateToWealthWorkout() {
