@@ -7,7 +7,12 @@ struct BrandQuestion: Identifiable {
     let questionBlank: String
     let questionEnd: String
     let correctAnswer: String
-    let options: [String]
+    let incorrectAnswer: String
+    
+    // Options array derived from correct and incorrect answers
+    var options: [String] {
+        return [correctAnswer, incorrectAnswer].shuffled()
+    }
     
     // Full sentence combining all parts
     var fullQuestion: String {
@@ -39,35 +44,35 @@ struct BrandBuilderGameView: View {
             questionBlank: "_______",
             questionEnd: "is how the public perceives them beyond their sport.",
             correctAnswer: "Brand",
-            options: ["Brand", "Contract", "Ability", "Network"]
+            incorrectAnswer: "Contract"
         ),
         BrandQuestion(
             questionStart: "Athletes who consistently",
             questionBlank: "_______",
             questionEnd: "content have stronger social media engagement.",
             correctAnswer: "Create",
-            options: ["Create", "Share", "Like", "Delete"]
+            incorrectAnswer: "Share"
         ),
         BrandQuestion(
             questionStart: "A strong personal brand can lead to",
             questionBlank: "_______",
             questionEnd: "opportunities beyond your playing career.",
             correctAnswer: "Endorsement",
-            options: ["Endorsement", "Coaching", "Trading", "Media"]
+            incorrectAnswer: "Coaching"
         ),
         BrandQuestion(
             questionStart: "Your",
             questionBlank: "_______",
             questionEnd: "should reflect your authentic self, not a manufactured persona.",
             correctAnswer: "Brand",
-            options: ["Brand", "Contract", "Interview", "Highlight"]
+            incorrectAnswer: "Contract"
         ),
         BrandQuestion(
             questionStart: "Building a personal brand requires",
             questionBlank: "_______",
             questionEnd: "and consistency across all platforms.",
             correctAnswer: "Authenticity",
-            options: ["Authenticity", "Luck", "Money", "Fame"]
+            incorrectAnswer: "Luck"
         )
     ]
     
@@ -113,26 +118,34 @@ struct BrandBuilderGameView: View {
                         .foregroundColor(.white)
                         .padding(.top, 16)
                     
-                    // Question with blank
-                    VStack(spacing: 4) {
+                    // Question with blank - updated to match designs exactly
+                    VStack(spacing: 16) {
                         Text(currentQuestion.questionStart)
                             .font(.custom("Magistral", size: 22))
                             .fontWeight(.medium)
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                         
-                        Text(currentQuestion.questionBlank)
-                            .font(.custom("Magistral", size: 22))
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.vertical, 8)
-                            .frame(width: 120, alignment: .center)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 2)
-                                    .offset(y: 12)
+                        // Blank line with dashes as in design
+                        HStack(spacing: 0) {
+                            Spacer()
+                            
+                            // Show selected answer or dashed line
+                            if let selected = selectedAnswer {
+                                Text(selected)
+                                    .font(.custom("Magistral", size: 22))
+                                    .fontWeight(.bold)
+                                    .foregroundColor(brandGold)
+                            } else {
+                                Text("—————")
+                                    .font(.custom("Magistral", size: 22))
+                                    .fontWeight(.bold)
                                     .foregroundColor(.white)
-                            )
+                            }
+                            
+                            Spacer()
+                        }
+                        .frame(height: 30)
                         
                         Text(currentQuestion.questionEnd)
                             .font(.custom("Magistral", size: 22))
@@ -141,35 +154,31 @@ struct BrandBuilderGameView: View {
                             .multilineTextAlignment(.center)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 60) // More space between question and answers
                     
-                    // Answer choices
-                    VStack(spacing: 12) {
+                    // Answer choices - minimalist design to match mockup
+                    VStack(spacing: 30) {
                         ForEach(currentQuestion.options, id: \.self) { option in
                             Button(action: {
                                 selectAnswer(option)
                             }) {
                                 Text(option)
-                                    .font(.custom("Magistral", size: 18))
+                                    .font(.custom("Magistral", size: 20))
+                                    .fontWeight(.medium)
                                     .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 16)
-                                    .padding(.horizontal, 20)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
                                     .background(
                                         selectedAnswer == option
-                                            ? (showingFeedback ? (isCorrect ? brandGreen : Color.red) : brandBlue)
+                                            ? brandBlue
                                             : Color.clear
                                     )
-                                    .cornerRadius(4)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                                    )
+                                    .cornerRadius(8)
                             }
                             .disabled(showingFeedback || showingNextQuestion)
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 30)
                 }
                 
                 Spacer()
@@ -191,6 +200,17 @@ struct BrandBuilderGameView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
                 }
+                
+                // If feedback is showing but next button isn't yet, show points earned
+                else if showingFeedback && isCorrect {
+                    HStack {
+                        Text("+10 POINTS")
+                            .font(.custom("Magistral", size: 16))
+                            .fontWeight(.bold)
+                            .foregroundColor(brandGold)
+                    }
+                    .padding(.bottom, 20)
+                }
             }
         }
         .navigationBarTitle("Brand Builder", displayMode: .inline)
@@ -207,6 +227,9 @@ struct BrandBuilderGameView: View {
     
     // Check if the selected answer is correct
     private func selectAnswer(_ option: String) {
+        // Only process if no answer is already selected
+        guard selectedAnswer == nil else { return }
+        
         selectedAnswer = option
         isCorrect = option == currentQuestion.correctAnswer
         
