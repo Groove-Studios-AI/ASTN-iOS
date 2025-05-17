@@ -201,14 +201,14 @@ struct SpeedStreakGameView: View {
                 HStack(spacing: 0) {
                     Spacer() // Push to trailing edge
                     
-                    // Extended progress track with proper vertical spacing
+                    // Progress track with asset images
                     ProgressTrackView(
                         progress: CGFloat(currentQuestionIndex) / CGFloat(max(1, questions.count - 1)),
                         isAnimating: isAnimating
                     )
-                    .frame(height: geometry.size.height * 1.1) // Slightly taller to ensure dotted line extends properly
-                    .padding(.trailing, 5) // Minimal padding from edge
-                    .padding(.top, -50) // Pull track up to align with blue dots
+                    .frame(height: geometry.size.height * 1.0) // Match the parent height
+                    .padding(.trailing, 10) // Slight padding from edge
+                    .padding(.top, -30) // Adjust to align with blue dots
                 }
             }
         }

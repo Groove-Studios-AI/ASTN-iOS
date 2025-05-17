@@ -6,9 +6,11 @@ struct ProgressTrackView: View {
     // Whether we're currently animating
     var isAnimating: Bool = false
     
-    // Brand colors
-    private let brandBlue = Color.fromHex("#1A2196")
-    private let brandGold = Color.fromHex("#E8D5B5")
+    // Fixed dimensions based on asset proportions
+    private let trackWidth: CGFloat = 20
+    private let trackHeight: CGFloat = 600
+    private let iconSize: CGFloat = 40
+    private let fillInWidth: CGFloat = 38
     
     var body: some View {
         // The entire track component
@@ -17,74 +19,47 @@ struct ProgressTrackView: View {
             Spacer()
                 .frame(height: 50)
             
-            // Main track component
+            // Main track component using provided images
             ZStack(alignment: .top) {
-                // Dark track background
-                Rectangle()
-                    .fill(Color.black)
-                    .frame(width: 20, height: 600)
+                // Track image (vertical dotted line track)
+                Image("SpeedProgressTrack")
+                    .resizable()
+                    .frame(width: trackWidth, height: trackHeight)
                 
-                // Dotted line track - centered and extending full height
-                Path { path in
-                    path.move(to: CGPoint(x: 0, y: 0))
-                    path.addLine(to: CGPoint(x: 0, y: 600))
-                }
-                .stroke(style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
-                .foregroundColor(Color.white.opacity(0.5))
-                .frame(width: 20, height: 600)
+                // Piggy bank at top
+                Image("piggyBank")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
+                    .offset(y: 15)
                 
-                // Computer at top
-                VStack {
-                    ZStack {
-                        // Simplified laptop shape
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(brandGold)
-                            .frame(width: 25, height: 20)
-                        
-                        // Screen
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(brandGold)
-                            .frame(width: 20, height: 12)
-                            .offset(y: -4)
-                    }
-                    .rotationEffect(.degrees(180)) // Flip upside down to match screenshot
-                }
-                .offset(y: 15)
+                // Dollar bag - animated element
+                Image("dollarBag")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
+                    // Position based on progress (0.0-1.0), moves up as progress increases
+                    .offset(y: calculateMoneyBagPosition())
                 
-                // Money bag with dollar sign - animated element
-                ZStack {
-                    // Blue circle background
-                    Circle()
-                        .fill(brandBlue)
-                        .frame(width: 35, height: 35)
-                    
-                    // Dollar sign
-                    Text("$")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                // Position based on progress (0.0-1.0), moves up as progress increases
-                .offset(y: calculateMoneyBagPosition())
-                
-                // Bottom light beige pill (at bottom of track)
-                VStack {
-                    Capsule()
-                        .fill(brandGold)
-                        .frame(width: 35, height: 80)
-                }
-                .offset(y: 520) // Positioned at the bottom
+                // Progress fill-in at bottom
+                Image("SpeedProgressFillIn")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: fillInWidth)
+                    .offset(y: trackHeight - 80) // Positioned at the bottom
             }
+            // Center the track
+            .frame(width: trackWidth)
         }
-        .frame(width: 20)
         // Enhanced spring animation with a little bounce
         .animation(.spring(response: 0.8, dampingFraction: 0.7, blendDuration: 0.6), value: progress)
     }
     
-    // Calculate the vertical position of the money bag
+    // Calculate the vertical position of the dollar bag
     private func calculateMoneyBagPosition() -> CGFloat {
         // Animation starts at bottom and moves to top as progress increases
-        let startPosition: CGFloat = 500  // Position at the bottom
-        let endPosition: CGFloat = 50     // Position at the top
+        let startPosition: CGFloat = trackHeight - 100  // Position at the bottom above the fill-in
+        let endPosition: CGFloat = 50                   // Position at the top near piggy bank
         
         // Linear interpolation with progress
         return startPosition - (progress * (startPosition - endPosition))
