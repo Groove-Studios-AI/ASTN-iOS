@@ -28,12 +28,14 @@ struct SpeedStreakGameView: View {
     @State private var points = 0
     @State private var currentQuestionIndex = 0
     @State private var selectedAnswer: String? = nil
+    @State private var answerStartTime: Date? = nil
     @State private var isCorrect = false
     @State private var showingFeedback = false
     @State private var speedBonus = 0
-    @State private var carPosition: CGFloat = 0
-    @State private var answerStartTime: Date? = nil
+    @State private var speedyAnswersCount = 0
     @State private var isAnimating = false
+    @State private var carPosition: CGFloat = 0
+    @State private var remainingLives = 4 // Starting lives
     
     // Demo questions (these would come from your data model in production)
     private let questions = [
@@ -211,6 +213,45 @@ struct SpeedStreakGameView: View {
                     .padding(.top, -30) // Adjust to align with blue dots
                 }
             }
+            
+            // MARK: - End Game Screens Overlay
+            if flowCoordinator.currentScreen != .none {
+                ZStack {
+                    // Full screen black overlay
+                    Color.black.edgesIgnoringSafeArea(.all)
+                    
+                    // Game result screen
+                    if flowCoordinator.currentScreen == .results, let result = flowCoordinator.gameResult {
+                        GameResultView(
+                            score: result.score,
+                            speedyAnswers: result.speedyAnswers,
+                            livesRemaining: result.livesRemaining,
+                            gameType: result.gameType,
+                            onContinue: { flowCoordinator.showInvestment() }
+                        )
+                    }
+                    
+                    // Investment opportunity screen
+                    else if flowCoordinator.currentScreen == .investment, let investment = flowCoordinator.investmentOffer {
+                        InvestmentOpportunityView(
+                            investment: investment,
+                            onDecline: { flowCoordinator.promptDeclineConfirmation() },
+                            onInquire: { flowCoordinator.inquireAboutInvestment() },
+                            showDeclineConfirmation: $flowCoordinator.showDeclineConfirmation
+                        )
+                    }
+                    
+                    // Premium upsell screen
+                    else if flowCoordinator.currentScreen == .premium {
+                        PremiumUpsellView(
+                            onReturnHome: { flowCoordinator.returnHome() },
+                            onUnlockPremium: { flowCoordinator.unlockPremium() }
+                        )
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(100) // Ensure it's on top of everything
+            }
         }
         .navigationBarTitle("", displayMode: .inline)
         .navigationBarItems(leading: Button(action: {
@@ -221,16 +262,24 @@ struct SpeedStreakGameView: View {
                     .foregroundColor(brandGold)
                 Text("Back")
                     .foregroundColor(brandGold)
-                    .font(.custom("Magistral", size: 16))
+                    .font(.custom("Magistral", size: 18))
             }
         })
-        // No custom tab bar needed since the system already shows one
         .onAppear {
-            // Start the first question timer
+            // Start timer for first question when view appears
             answerStartTime = Date()
+        }
+        // Navigate back to dashboard when flowCoordinator says to return home
+        .onChange(of: flowCoordinator.currentScreen) { newScreen in
+            if newScreen == .none {
+                // This dismisses the current view to go back to the dashboard
+                presentationMode.wrappedValue.dismiss()
+            }
         }
     }
     
+    // MARK: - Game Flow Coordinator
+    @StateObject private var flowCoordinator = GameFlowCoordinator()
     // Check if the selected answer is correct
     private func checkAnswer(_ selectedDefinition: String) {
         // Prevent multiple selections for the same question
@@ -247,8 +296,10 @@ struct SpeedStreakGameView: View {
             // Award speed bonus based on response time
             if timeTaken < 2.0 {
                 speedBonus = 5
+                speedyAnswersCount += 1
             } else if timeTaken < 4.0 {
                 speedBonus = 3
+                speedyAnswersCount += 1
             } else if timeTaken < 6.0 {
                 speedBonus = 1
             } else {
@@ -271,7 +322,7 @@ struct SpeedStreakGameView: View {
             showingFeedback = true
         }
         
-        // After a delay, move to the next question
+        // After a delay, move to the next question or finish game
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             if currentQuestionIndex < questions.count - 1 {
                 withAnimation {
@@ -282,13 +333,27 @@ struct SpeedStreakGameView: View {
                     answerStartTime = Date() // Reset timer for next question
                 }
             } else {
-                // Game is over, handle completion
+                // Game is over, show game result screen
                 withAnimation {
                     showingFeedback = false
                 }
-                // Could navigate to results screen or back to workout list
+                finishGame()
             }
         }
+    }
+    
+    // Called when the game is complete
+    private func finishGame() {
+        // Create game result
+        let result = GameResult(
+            score: points,
+            speedyAnswers: speedyAnswersCount,
+            livesRemaining: 4, // Placeholder - could be dynamic based on game state
+            gameType: .speedStreak
+        )
+        
+        // Trigger game completion in flow coordinator
+        flowCoordinator.completeGame(result: result)
     }
 }
 
