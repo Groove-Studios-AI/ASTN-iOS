@@ -159,10 +159,10 @@ class DashboardViewModel: ObservableObject {
     // MARK: - Action Methods
     
     func completeWorkout() {
-        // Navigate to the Reps tab (index 2)
+        // Navigate to the Reps tab
         print("Navigating to Reps tab for workout completion")
         // Use the AppState to handle tab navigation
-        AppState.shared.navigateToTab(2) // Navigate to the Reps tab
+        AppState.shared.navigateToTab("reps") // Navigate to the Reps tab
     }
     
     func navigateToWealthWorkout() {
@@ -209,7 +209,7 @@ class DashboardViewModel: ObservableObject {
     
     func selectFeaturedGame(_ game: FeaturedGame) {
         // First navigate to the Reps tab for all featured games
-        AppState.shared.navigateToTab(2)
+        AppState.shared.navigateToTab("reps")
         
         // Log which game was selected
         print("Selected featured game: \(game.gameName)")

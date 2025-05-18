@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 // Coordinator to manage app-level navigation
 class AppCoordinator {
@@ -23,7 +24,10 @@ class AppCoordinator {
     // Switch to login screen
     func switchToAuthFlow() {
         print("AppCoordinator: Switching to login screen")
+        // Create LoginScreenView with AppState as environment object
         let loginView = LoginScreenView()
+            .environmentObject(AppState.shared)
+            
         let hostingController = UIHostingController(rootView: loginView)
         hostingController.modalPresentationStyle = .fullScreen
         
@@ -36,7 +40,10 @@ class AppCoordinator {
     // Switch to onboarding flow after signup
     func switchToOnboardingFlow() {
         print("AppCoordinator: Switching to onboarding flow")
+        // Create OnboardingView with AppState as environment object
         let onboardingView = OnboardingView()
+            .environmentObject(AppState.shared)
+            
         let hostingController = UIHostingController(rootView: onboardingView)
         hostingController.modalPresentationStyle = .fullScreen
         
@@ -55,7 +62,10 @@ class AppCoordinator {
     // Switch to the main tab controller, replacing entire navigation stack
     func switchToMainInterface() {
         print("AppCoordinator: Switching to main interface")
+        // Create MainTabView with AppState as environment object
         let mainTabView = MainTabView()
+            .environmentObject(AppState.shared)
+        
         let hostingController = UIHostingController(rootView: mainTabView)
         hostingController.modalPresentationStyle = .fullScreen
         
