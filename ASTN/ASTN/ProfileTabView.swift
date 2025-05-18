@@ -115,23 +115,74 @@ struct ProfileTabView: View {
                     )
                 )
             
-            // Settings Button
-            HStack {
+            VStack {
+                // Top row - Settings Button
+                HStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Text("Settings")
+                            .font(.custom("Magistral", size: 15))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.4))
+                            .cornerRadius(16)
+                    }
+                }
+                .padding(.top, 44) // Account for status bar height
+                
                 Spacer()
                 
-                Button(action: {
-                    showingSettings = true
-                }) {
-                    Text("Settings")
-                        .font(.custom("Magistral", size: 15))
+                // Bottom row - Edit Profile and Share buttons
+                VStack(alignment: .leading, spacing: 12) {
+                    // Name display
+                    Text(userData.name)
+                        .font(.custom("Magistral", size: 28))
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
-                        .background(Color.black.opacity(0.4))
-                        .cornerRadius(16)
+                    
+                    HStack {
+                        // Edit Profile button
+                        Button(action: {
+                            // Action for edit profile
+                        }) {
+                            Text("Edit Profile")
+                                .font(.custom("Magistral", size: 15))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color(red: 0.1, green: 0.1, blue: 0.1))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                        
+                        Spacer()
+                        
+                        // Share button
+                        Button(action: {
+                            // Action for share
+                        }) {
+                            Image(systemName: "paperplane")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                    }
                 }
+                .padding(.bottom, 20)
             }
-            .padding(.top, 44) // Account for status bar height
             .padding(.horizontal, 20)
         }
     }
@@ -146,7 +197,7 @@ struct ProfileTabView: View {
     
     // MARK: - Location Row
     private var locationRow: some View {
-        HStack {
+        HStack(spacing: 10) {
             Text(userData.location)
                 .font(.custom("Magistral", size: 16))
                 .foregroundColor(.white.opacity(0.8))
@@ -154,20 +205,20 @@ struct ProfileTabView: View {
             
             Spacer()
             
-            // Distance badge
-            HStack(spacing: 4) {
-                Image(systemName: "arrow.up.forward")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
+            // Distance badge with location icon
+            HStack(spacing: 6) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.indigo)
                 
                 Text("\(userData.distance) mi")
                     .font(.custom("Magistral", size: 14))
                     .foregroundColor(.white)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.black.opacity(0.5))
-            .cornerRadius(14)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.gray.opacity(0.2))
+            .cornerRadius(16)
         }
     }
     
@@ -192,42 +243,25 @@ struct ProfileTabView: View {
     
     // MARK: - Interests Grid
     private var interestsGrid: some View {
-        let horizontalPadding: CGFloat = 16 // Leading/trailing padding of parent view
-        let cellSpacing: CGFloat = 2 // Space between cells (10px as specified)
-        let availableWidth = UIScreen.main.bounds.width - (horizontalPadding * 2) - cellSpacing
-        let cellWidth = availableWidth / 2
+        let cellSpacing: CGFloat = 8 // Space between cells
+        let itemsPerRow: CGFloat = 2
         
-        return VStack(alignment: .leading, spacing: 16) {
-            // First row - Fitness and Community
-            HStack(spacing: cellSpacing) {
-                InterestTag(title: "Fitness", isSelected: true)
-                    .frame(width: cellWidth)
-                InterestTag(title: "Community", isSelected: true)
-                    .frame(width: cellWidth)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, horizontalPadding)
+        return GeometryReader { proxy in
+            let width = (proxy.size.width - cellSpacing * (itemsPerRow - 1)) / itemsPerRow
             
-            // Second row - Education and Music
-            HStack(spacing: cellSpacing) {
-                InterestTag(title: "Education", isSelected: false)
-                    .frame(width: cellWidth)
-                InterestTag(title: "Music", isSelected: false)
-                    .frame(width: cellWidth)
+            VStack {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: width, maximum: width), spacing: cellSpacing)], spacing: cellSpacing) {
+                    // Generate interest tags based on user data
+                    ForEach(userData.interests, id: \.self) { interest in
+                        InterestTag(title: interest, isSelected: selectedInterests.contains(interest))
+                            .onTapGesture {
+                                toggleInterest(interest)
+                            }
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, horizontalPadding)
-            
-            // Third row - Fitness again (single tag)
-            HStack(spacing: cellSpacing) {
-                InterestTag(title: "Fitness", isSelected: true)
-                    .frame(width: cellWidth)
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, horizontalPadding)
         }
-        .padding(.horizontal, 0) // Remove any external padding from the VStack itself
+        .frame(height: userData.interests.count > 2 ? 150 : 100)
     }
     
     // MARK: - Gallery Section
@@ -321,56 +355,54 @@ struct ProfileTabView: View {
         }
     }
 }
+
+
     
+// MARK: - Supporting Structures
+
+// Profile data structure
+struct ProfileData {
+    let name: String
+    let category: String
+    let location: String
+    let distance: Int
+    let about: String
+    let interests: [String]
+}
+
+// Interest Tag Component
+struct InterestTag: View {
+    let title: String
+    let isSelected: Bool
     
-    // MARK: - Supporting Structures
-    
-    // Interest Tag Component
-    struct InterestTag: View {
-        let title: String
-        let isSelected: Bool
-        
-        // Define the custom gold color for selected interests
-        private let selectedColor = Color(red: 232/255, green: 213/255, blue: 181/255) // #E8D5B5
-        
-        var body: some View {
-            HStack(spacing: 10) {
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(selectedColor)
-                }
-                
-                Text(title)
-                    .font(.custom("Magistral", size: 17))
-                    .foregroundColor(isSelected ? selectedColor : .white)
-                    .lineLimit(1)
+    var body: some View {
+        HStack(spacing: 6) {
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .frame(height: 48) // Taller height to match design
-            .background(Color.black.opacity(0.2))
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? selectedColor : Color.white.opacity(0.3), lineWidth: 1)
-            )
-            .clipShape(Capsule()) // Using Capsule for more oval shape
+            
+            Text(title)
+                .font(.custom("Magistral", size: 16))
+                .foregroundColor(.white)
+                .lineLimit(1)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(height: 40)
+        .background(isSelected ? Color(red: 0.3, green: 0.3, blue: 0.35) : Color.black.opacity(0.2))
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.2), lineWidth: 1)
+        )
     }
-    
-    // Profile data structure
-    struct ProfileData {
-        let name: String
-        let category: String
-        let location: String
-        let distance: Int
-        let about: String
-        let interests: [String]
+}
+
+// Preview
+struct ProfileTabView_Previews: PreviewProvider {
+    static var previews: some View {
+        ProfileTabView()
     }
-    
-    // Preview
-    struct ProfileTabView_Previews: PreviewProvider {
-        static var previews: some View {
-            ProfileTabView()
-        }
-    }
+}
