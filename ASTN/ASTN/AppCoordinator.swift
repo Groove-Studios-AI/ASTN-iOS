@@ -12,8 +12,14 @@ class AppCoordinator {
     func switchToWelcomeScreen() {
         print("AppCoordinator: Switching to welcome screen")
         let welcomeView = WelcomeScreenView()
+            .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
+            
         let hostingController = UIHostingController(rootView: welcomeView)
         hostingController.modalPresentationStyle = .fullScreen
+        
+        // Apply dark theme to the hosting controller view
+        hostingController.view.backgroundColor = .black
         
         // Ensure we're on the main thread when setting the root view controller
         DispatchQueue.main.async { [weak self] in
@@ -27,9 +33,13 @@ class AppCoordinator {
         // Create LoginScreenView with AppState as environment object
         let loginView = LoginScreenView()
             .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
             
         let hostingController = UIHostingController(rootView: loginView)
         hostingController.modalPresentationStyle = .fullScreen
+        
+        // Apply dark theme to the hosting controller view
+        hostingController.view.backgroundColor = .black
         
         // Ensure we're on the main thread when setting the root view controller
         DispatchQueue.main.async { [weak self] in
@@ -43,9 +53,13 @@ class AppCoordinator {
         // Create OnboardingView with AppState as environment object
         let onboardingView = OnboardingView()
             .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
             
         let hostingController = UIHostingController(rootView: onboardingView)
         hostingController.modalPresentationStyle = .fullScreen
+        
+        // Apply dark theme to the hosting controller view
+        hostingController.view.backgroundColor = .black
         
         DispatchQueue.main.async { [weak self] in
             self?.setRootViewController(hostingController)
@@ -65,9 +79,13 @@ class AppCoordinator {
         // Create MainTabView with AppState as environment object
         let mainTabView = MainTabView()
             .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
         
         let hostingController = UIHostingController(rootView: mainTabView)
         hostingController.modalPresentationStyle = .fullScreen
+        
+        // Apply dark theme to the hosting controller view
+        hostingController.view.backgroundColor = .black
         
         DispatchQueue.main.async { [weak self] in
             self?.setRootViewController(hostingController)

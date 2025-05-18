@@ -22,24 +22,35 @@ struct ASTNApp: App {
         // Setup appearance, analytics, etc.
     }
     
-    // Configure the UINavigationBar appearance to prevent color changes during scrolling
+    // Configure the UINavigationBar appearance with dark theme
     private func configureNavigationBarAppearance() {
+        // Create and configure appearance
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(named: "NavBarBackground") ?? .systemBackground
         
-        // Title text attributes
+        // Set background to black
+        appearance.backgroundColor = .black
+        
+        // Set title text color to white
         appearance.titleTextAttributes = [
-            .foregroundColor: UIColor(named: "NavBarText") ?? .label
+            .foregroundColor: UIColor.white
         ]
         
-        // Setup for all navigation bars
+        // Set large title attributes if used
+        appearance.largeTitleTextAttributes = [
+            .foregroundColor: UIColor.white
+        ]
+        
+        // Apply appearance settings to all navigation bar states
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         
-        // Ensure the tint color is set properly for bar button items
-        UINavigationBar.appearance().tintColor = UIColor(named: "AccentColor") ?? .systemBlue
+        // Set tint color for bar button items to white
+        UINavigationBar.appearance().tintColor = .white
+        
+        // Note: For status bar style, we need to set View.preferredColorScheme(.dark)
+        // or configure in Info.plist with UIUserInterfaceStyle = Dark
     }
     
     var body: some Scene {
@@ -51,6 +62,8 @@ struct ASTNApp: App {
                     // Initialize the AppCoordinator (ensures singleton is created)
                     _ = AppCoordinator.shared
                 }
+                // Apply dark mode to the entire app
+                .preferredColorScheme(.dark)
         }
     }
 }
