@@ -2,6 +2,16 @@ import SwiftUI
 import UIKit
 import Combine
 
+// Extension to apply all required environment objects to any view
+extension View {
+    /// Apply all shared environment objects required by the app
+    func withSharedEnvironment() -> some View {
+        self
+            .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
+    }
+}
+
 // Coordinator to manage app-level navigation
 class AppCoordinator {
     static let shared = AppCoordinator()
@@ -11,59 +21,28 @@ class AppCoordinator {
     // Switch from splash screen to welcome screen
     func switchToWelcomeScreen() {
         print("AppCoordinator: Switching to welcome screen")
-        let welcomeView = WelcomeScreenView()
-            .environmentObject(AppState.shared)
-            .preferredColorScheme(.dark)
-            
-        let hostingController = UIHostingController(rootView: welcomeView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let welcomeView = WelcomeScreenView().withSharedEnvironment()
         
-        // Apply dark theme to the hosting controller view
-        hostingController.view.backgroundColor = .black
-        
-        // Ensure we're on the main thread when setting the root view controller
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(welcomeView)
     }
     
     // Switch to login screen
     func switchToAuthFlow() {
         print("AppCoordinator: Switching to login screen")
-        // Create LoginScreenView with AppState as environment object
-        let loginView = LoginScreenView()
-            .environmentObject(AppState.shared)
-            .preferredColorScheme(.dark)
-            
-        let hostingController = UIHostingController(rootView: loginView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let loginView = LoginScreenView().withSharedEnvironment()
         
-        // Apply dark theme to the hosting controller view
-        hostingController.view.backgroundColor = .black
-        
-        // Ensure we're on the main thread when setting the root view controller
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(loginView)
     }
     
     // Switch to onboarding flow after signup
     func switchToOnboardingFlow() {
         print("AppCoordinator: Switching to onboarding flow")
-        // Create OnboardingView with AppState as environment object
-        let onboardingView = OnboardingView()
-            .environmentObject(AppState.shared)
-            .preferredColorScheme(.dark)
-            
-        let hostingController = UIHostingController(rootView: onboardingView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let onboardingView = OnboardingView().withSharedEnvironment()
         
-        // Apply dark theme to the hosting controller view
-        hostingController.view.backgroundColor = .black
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(onboardingView)
     }
     
     // Handle forgot password flow
@@ -76,23 +55,27 @@ class AppCoordinator {
     // Switch to the main tab controller, replacing entire navigation stack
     func switchToMainInterface() {
         print("AppCoordinator: Switching to main interface")
-        // Create MainTabView with AppState as environment object
-        let mainTabView = MainTabView()
-            .environmentObject(AppState.shared)
-            .preferredColorScheme(.dark)
+        // Use the shared environment modifier
+        let mainTabView = MainTabView().withSharedEnvironment()
         
-        let hostingController = UIHostingController(rootView: mainTabView)
+        presentView(mainTabView)
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// A generic method to present any SwiftUI view as the root view controller with proper environment
+    private func presentView<Content: View>(_ content: Content) {
+        let hostingController = UIHostingController(rootView: content)
         hostingController.modalPresentationStyle = .fullScreen
         
         // Apply dark theme to the hosting controller view
         hostingController.view.backgroundColor = .black
         
+        // Ensure we're on the main thread when setting the root view controller
         DispatchQueue.main.async { [weak self] in
             self?.setRootViewController(hostingController)
         }
     }
-    
-    // MARK: - Helper Methods
     
     // Helper method to set the root view controller with animation
     private func setRootViewController(_ viewController: UIViewController) {
