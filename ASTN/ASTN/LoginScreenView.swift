@@ -389,19 +389,7 @@ struct LoginScreenView: View {
     }
 }
 
-// Placeholder extension to help with empty text fields
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
-    }
-}
+// Using the placeholder extension from ViewExtensions.swift
 
 struct LoginScreenView_Previews: PreviewProvider {
     static var previews: some View {

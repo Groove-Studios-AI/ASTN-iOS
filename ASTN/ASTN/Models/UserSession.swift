@@ -1,5 +1,21 @@
 import Foundation
 import Combine
+import Amplify
+import AWSCognitoAuthPlugin
+import AWSAPIPlugin
+
+// Helper bridge for migrating from callbacks to async/await
+extension Amplify {
+    struct Legacy {
+        static func wrap<T>(_ work: @escaping () async throws -> T,
+                           completion: @escaping (Result<T,Error>) -> Void) {
+            Task {
+                do   { completion(.success(try await work())) }
+                catch { completion(.failure(error)) }
+            }
+        }
+    }
+}
 
 class UserSession: ObservableObject {
     // Singleton instance for app-wide access
@@ -17,98 +33,245 @@ class UserSession: ObservableObject {
     private var authToken: String?
     
     private init() {
+        // Make sure Amplify is configured first (safe: returns immediately if already done)
+        AmplifyConfigAsync.configure()
+        
         // Check for existing auth session on init
         checkForExistingSession()
+        
+        // Setup auth event listener
+        setupAuthEventListener()
+    }
+    
+    // Listen for Amplify auth events
+    private func setupAuthEventListener() {
+        _ = Amplify.Hub.listen(to: .auth) { [weak self] (payload: HubPayload) in
+            switch payload.eventName {
+            case HubPayload.EventName.Auth.signedIn:
+                print("✓ User signed in - updating UserSession")
+                self?.fetchCurrentAuthSession()
+                
+            case HubPayload.EventName.Auth.signedOut:
+                print("✓ User signed out - clearing UserSession")
+                DispatchQueue.main.async {
+                    self?.currentUser = nil
+                    self?.isAuthenticated = false
+                    self?.clearStoredSession()
+                }
+                
+            case HubPayload.EventName.Auth.sessionExpired:
+                print("⚠️ Session expired")
+                DispatchQueue.main.async {
+                    self?.isAuthenticated = false
+                }
+                
+            default:
+                break
+            }
+        }
     }
     
     // MARK: - Authentication Methods
     
     /// Register a new user with email and password
+    /// Async implementation for registration
+    private func registerUserAsync(email: String, password: String) async throws -> User {
+        let userAttributes = [AuthUserAttribute(.email, value: email)]
+        let options = AuthSignUpRequest.Options(userAttributes: userAttributes)
+        
+        let signUpResult = try await Amplify.Auth.signUp(
+            username: email,
+            password: password,
+            options: options)
+        
+        guard signUpResult.isSignUpComplete else {
+            print("⚠️ Sign up needs confirmation")
+            throw SessionError.confirmationRequired
+        }
+        
+        print("✅ Sign up successful - user confirmed automatically")
+        return try await loginAsync(email: email, password: password)
+    }
+    
+    // Legacy wrapper for backward compatibility
     func registerUser(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        // Simulate API call for now
-        apiService.registerUser(email: email, password: password) { [weak self] result in
-            switch result {
-            case .success(let userData):
-                // Create user from API response
-                if let user = userData["user"] as? [String: Any], 
-                   let userId = user["id"] as? String,
-                   let email = user["email"] as? String,
-                   let authMethodStr = user["authMethod"] as? String,
-                   let authMethod = AuthMethod(rawValue: authMethodStr) {
-                    
-                    // Create user and store token
-                    let newUser = User(id: userId, email: email, authMethod: authMethod)
-                    self?.currentUser = newUser
-                    self?.isAuthenticated = true
-                    self?.isOnboarding = true
-                    
-                    // Store auth token
-                    if let token = userData["token"] as? String {
-                        self?.authToken = token
-                        self?.saveSession(user: newUser, token: token)
-                    }
-                    
-                    completion(.success(newUser))
-                } else {
-                    completion(.failure(SessionError.invalidUserData))
-                }
-            case .failure(let error):
-                completion(.failure(error))
-            }
+        Amplify.Legacy.wrap({ [weak self] in
+            guard let self = self else { throw SessionError.unknown }
+            return try await self.registerUserAsync(email: email, password: password)
+        }, completion: completion)
+    }
+    
+    /// Async implementation of confirmation signup
+    private func confirmSignUpAsync(username: String, confirmationCode: String) async throws -> Bool {
+        do {
+            _ = try await Amplify.Auth.confirmSignUp(
+                for: username,
+                confirmationCode: confirmationCode
+            )
+            print("✅ Confirmation successful")
+            return true
+        } catch {
+            print("❌ Confirmation failed: \(error)")
+            throw SessionError.confirmationFailed
         }
     }
     
-    /// Login with email and password
+    /// Confirm user signup with confirmation code - legacy wrapper
+    func confirmSignUp(username: String, confirmationCode: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        Amplify.Legacy.wrap({ [weak self] in
+            guard let self = self else { throw SessionError.unknown }
+            return try await self.confirmSignUpAsync(username: username, confirmationCode: confirmationCode)
+        }, completion: completion)
+    }
+    
+    /// Async implementation for login
+    private func loginAsync(email: String, password: String) async throws -> User {
+        let signInResult = try await Amplify.Auth.signIn(username: email, password: password)
+        
+        if signInResult.isSignedIn {
+            print("✅ Sign in successful")
+            
+            // Get user ID from authentication session
+            guard let userId = try? await AmplifyConfigAsync.getCurrentUserId() else {
+                throw SessionError.noUserLoggedIn
+            }
+            
+            // Create basic user initially
+            let newUser = User.newUser(id: userId, email: email, authMethod: .email)
+            
+            // Update UI state
+            await MainActor.run {
+                self.currentUser = newUser
+                self.isAuthenticated = true
+                self.isOnboarding = true  // Assume new user starts onboarding by default
+            }
+            
+            // Now query GraphQL to check if this user has a profile
+            do {
+                let hasProfile = try await fetchUserProfileAsync(userId: userId)
+                await MainActor.run {
+                    self.isOnboarding = !hasProfile
+                }
+            } catch {
+                print("⚠️ Could not fetch user profile: \(error)")
+            }
+            
+            saveSession(user: newUser, token: nil)
+            return newUser
+            
+        } else if case .confirmSignUp = signInResult.nextStep {
+            // User needs to confirm sign up
+            throw SessionError.confirmationRequired
+        } else {
+            // Need to handle other next steps (password reset, etc.)
+            throw SessionError.authenticationFailed
+        }
+    }
+    
+    /// Legacy wrapper for login
     func login(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
-        apiService.login(email: email, password: password) { [weak self] result in
-            switch result {
-            case .success(let userData):
-                // Parse user data and store session
-                if let user = userData["user"] as? [String: Any], 
-                   let userId = user["id"] as? String,
-                   let email = user["email"] as? String,
-                   let authMethodStr = user["authMethod"] as? String,
-                   let authMethod = AuthMethod(rawValue: authMethodStr) {
-                    
-                    // Create a user from the response
-                    var newUser = User.newUser(id: userId, email: email, authMethod: authMethod)
-                    
-                    // Populate other user fields if available
-                    if let onboardingDict = user["onboarding"] as? [String: Any],
-                       let surveyCompleted = onboardingDict["surveyCompleted"] as? Bool {
-                        newUser.onboarding.surveyCompleted = surveyCompleted
-                        newUser.onboarding.completionTimestamp = Date()
-                        
-                        // If onboarding is complete, we should go straight to the main app
-                        self?.isOnboarding = !surveyCompleted
+        Amplify.Legacy.wrap({ [weak self] in
+            guard let self = self else { throw SessionError.unknown }
+            return try await self.loginAsync(email: email, password: password)
+        }, completion: completion)
+    }
+    
+    /// Async implementation of logout
+    private func logoutAsync() async {
+        await AmplifyConfigAsync.signOut()
+        
+        // Update UI on main thread
+        await MainActor.run {
+            // Clear local state
+            currentUser = nil
+            authToken = nil
+            isAuthenticated = false
+            isOnboarding = false
+        }
+        clearStoredSession()
+    }
+    
+    /// Logout the current user (legacy wrapper)
+    func logout() {
+        Task { [weak self] in
+            await self?.logoutAsync()
+        }
+    }
+    
+    /// Async implementation of fetchCurrentAuthSession
+    private func fetchCurrentAuthSessionAsync() async {
+        do {
+            let session = try await Amplify.Auth.fetchAuthSession()
+            
+            // Update authentication state
+            await MainActor.run {
+                self.isAuthenticated = session.isSignedIn
+            }
+            
+            if session.isSignedIn {
+                // If authenticated, get the user ID
+                guard let userId = await AmplifyConfigAsync.getCurrentUserId() else { return }
+                
+                // Try to load user from local storage first
+                if let storedUser = loadUserFromStorage(), storedUser.id == userId {
+                    await MainActor.run {
+                        self.currentUser = storedUser
                     }
-                    
-                    self?.currentUser = newUser
-                    self?.isAuthenticated = true
-                    
-                    // Store auth token
-                    if let token = userData["token"] as? String {
-                        self?.authToken = token
-                        self?.saveSession(user: newUser, token: token)
-                    }
-                    
-                    completion(.success(newUser))
                 } else {
-                    completion(.failure(SessionError.invalidUserData))
+                    // Otherwise create a basic user object and fetch details later
+                    let newUser = User.newUser(id: userId, email: "", authMethod: .email)
+                    
+                    await MainActor.run {
+                        self.currentUser = newUser
+                    }
+                    
+                    // Try to fetch user profile to determine if onboarding is needed
+                    do {
+                        let hasProfile = try await fetchUserProfileAsync(userId: userId)
+                        await MainActor.run {
+                            self.isOnboarding = !hasProfile
+                        }
+                    } catch {
+                        print("⚠️ Could not fetch user profile: \(error)")
+                    }
                 }
-            case .failure(let error):
-                completion(.failure(error))
+            }
+        } catch {
+            print("❌ Failed to get auth session: \(error)")
+            await MainActor.run {
+                self.isAuthenticated = false
+                self.currentUser = nil
             }
         }
     }
     
-    /// Logout the current user
-    func logout() {
-        currentUser = nil
-        authToken = nil
-        isAuthenticated = false
-        isOnboarding = false
-        clearStoredSession()
+    /// Legacy wrapper for fetchCurrentAuthSession
+    func fetchCurrentAuthSession() {
+        Task { [weak self] in
+            await self?.fetchCurrentAuthSessionAsync()
+        }
+    }
+    
+    /// Async implementation of fetchUserProfile
+    private func fetchUserProfileAsync(userId: String) async throws -> Bool {
+        // Use Amplify GraphQL API to fetch the user profile
+        // This is a placeholder - you'll need to implement the actual GraphQL query
+        
+        // For now, just return true if the user exists in the local storage
+        if let storedUser = loadUserFromStorage(), storedUser.id == userId {
+            return true
+        } else {
+            // In a real implementation, you'd query the backend asynchronously
+            return false
+        }
+    }
+    
+    /// Legacy wrapper for fetchUserProfile
+    private func fetchUserProfile(userId: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        Amplify.Legacy.wrap({ [weak self] in
+            guard let self = self else { throw SessionError.unknown }
+            return try await self.fetchUserProfileAsync(userId: userId)
+        }, completion: completion)
     }
     
     // MARK: - Onboarding Methods
@@ -255,28 +418,49 @@ class UserSession: ObservableObject {
         }
     }
     
-    private func checkForExistingSession() {
-        // Check UserDefaults for stored session
-        if let userData = UserDefaults.standard.data(forKey: "currentUser"),
-           let storedToken = UserDefaults.standard.string(forKey: "authToken") {
-            do {
-                let user = try JSONDecoder().decode(User.self, from: userData)
-                self.currentUser = user
-                self.authToken = storedToken
-                self.isAuthenticated = true
-                
-                // Determine if still in onboarding
-                self.isOnboarding = !(user.onboarding.surveyCompleted)
-            } catch {
-                print("Failed to decode stored user: \(error)")
-                clearStoredSession()
-            }
-        }
-    }
-    
     private func clearStoredSession() {
         UserDefaults.standard.removeObject(forKey: "currentUser")
         UserDefaults.standard.removeObject(forKey: "authToken")
+    }
+    
+    private func loadUserFromStorage() -> User? {
+        guard let userData = UserDefaults.standard.data(forKey: "currentUser") else {
+            return nil
+        }
+        
+        do {
+            let user = try JSONDecoder().decode(User.self, from: userData)
+            return user
+        } catch {
+            print("Error loading user from storage: \(error)")
+            return nil
+        }
+    }
+    
+    // Check if there's a saved session
+    private func checkForExistingSession() {
+        // Check Amplify auth session first
+        fetchCurrentAuthSession()
+        
+        // As a fallback, check local storage
+        if !isAuthenticated, let userData = UserDefaults.standard.data(forKey: "currentUser"),
+           let user = try? JSONDecoder().decode(User.self, from: userData) {
+            
+            // We have a stored user but need to verify with Amplify
+            Task {
+                let isSignedIn = await AmplifyConfigAsync.isSignedIn()
+                await MainActor.run {
+                    self.isAuthenticated = isSignedIn
+                    if isSignedIn {
+                        self.currentUser = user
+                        self.isOnboarding = !user.onboarding.surveyCompleted
+                    } else {
+                        // Auth expired, clear local session
+                        self.clearStoredSession()
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Profile Picture Methods
@@ -370,6 +554,14 @@ enum SessionError: Error {
     case invalidUserData
     case networkError
     case sessionExpired
+    case confirmationRequired
+    case confirmationFailed
+    case authenticationFailed
+    case userNotFound
+    case userAlreadyExists
+    case signUpFailed
+    case signInFailed
+    case unknown
 }
 
 // Simplified API service (mock implementation)

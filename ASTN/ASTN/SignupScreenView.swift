@@ -1,5 +1,7 @@
 import SwiftUI
+import AWSCognitoAuthPlugin
 import Combine
+import Amplify
 
 struct SignupScreenView: View {
     // Define brand colors
@@ -26,6 +28,8 @@ struct SignupScreenView: View {
     @State private var showAuthError: Bool = false
     @State private var authErrorMessage: String = ""
     @State private var isLoading: Bool = false
+    @State private var showCodeEntrySheet: Bool = false
+    @State private var emailForConfirmation: String = ""
     
     // Computed properties for validation
     private var isNameValid: Bool {
@@ -39,7 +43,10 @@ struct SignupScreenView: View {
     }
     
     private var isPasswordValid: Bool {
-        return password.count >= 6
+        return password.count >= 8 &&
+           password.rangeOfCharacter(from: .lowercaseLetters) != nil &&
+           password.rangeOfCharacter(from: .uppercaseLetters) != nil &&
+           password.rangeOfCharacter(from: .decimalDigits) != nil
     }
     
     private var isConfirmPasswordValid: Bool {
@@ -55,6 +62,23 @@ struct SignupScreenView: View {
             ZStack {
                 // Background color
                 brandBlack.ignoresSafeArea(.all)
+                
+                // Show Code Entry Sheet when needed
+                .sheet(isPresented: $showCodeEntrySheet) {
+                    CodeEntrySheet(
+                        email: emailForConfirmation,
+                        onComplete: {
+                            // When verification is complete, dismiss the sheet and go to onboarding
+                            showCodeEntrySheet = false
+                            AppCoordinator.shared.switchToOnboardingFlow()
+                        },
+                        onDismiss: {
+                            // Just dismiss the sheet if the user cancels
+                            showCodeEntrySheet = false
+                        }
+                    )
+                    .preferredColorScheme(.dark)
+                }
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -469,7 +493,7 @@ struct SignupScreenView: View {
         if password.isEmpty {
             passwordError = nil
         } else if !isPasswordValid {
-            passwordError = "Password must be at least 6 characters"
+            passwordError = "Password must be at least 8 characters and include upper-case, lower-case, and a number"
         } else {
             passwordError = nil
         }
@@ -525,38 +549,64 @@ struct SignupScreenView: View {
         // Get access to UserSession
         let userSession = UserSession.shared
         
-        // Simulate network delay - in a real app, this would be an API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // This is where you would implement actual signup logic
-            // For now, we'll simulate a successful signup for the demo
-            
-            if email.lowercased() == "taken@example.com" {
-                // Simulate an authentication error
-                showAuthError = true
-                authErrorMessage = "This email is already registered. Please use a different email or login."
-                isLoading = false
-            } else {
-                // Create a new user object
-                let userId = UUID().uuidString
+        // Register the user with AWS Cognito via UserSession
+        userSession.registerUser(email: email, password: password) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false
                 
-                // Register the user with UserSession
-                userSession.registerUser(email: email, password: password) { result in
-                    DispatchQueue.main.async {
-                        switch result {
-                        case .success(let user):
-                            // User successfully registered and stored in UserSession
-                            print("User registered: \(user.id)")
+                switch result {
+                case .success(let user):
+                    // User successfully registered and stored in UserSession
+                    print("✅ User registered: \(user.id)")
+                    
+                    // Success case - proceed to onboarding flow
+                    AppCoordinator.shared.switchToOnboardingFlow()
+                    
+                case .failure(let error):
+                    // Handle specific registration errors
+                    self.showAuthError = true
+                    
+                    if let sessionError = error as? SessionError {
+                        switch sessionError {
+                        case .confirmationRequired:
+                            // Store email for confirmation
+                            self.emailForConfirmation = self.email
+                            // Show the code entry sheet instead of error message
+                            self.showCodeEntrySheet = true
+                            self.showAuthError = false
                             
-                            // Success case - proceed to onboarding flow
-                            self.isLoading = false
-                            AppCoordinator.shared.switchToOnboardingFlow()
+                        case .userAlreadyExists:
+                            self.authErrorMessage = "This email is already registered. Please use a different email or login."
                             
-                        case .failure(let error):
-                            // Handle registration error
-                            self.showAuthError = true
+                        default:
                             self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
-                            self.isLoading = false
                         }
+                    } else if let amplifyError = error as? AuthError {
+                        switch amplifyError {
+                        
+                        // ➊ high-level category
+                        case .service(_, _, let underlyingError):
+                            if let cognito = underlyingError as? AWSCognitoAuthError {
+                                // ➋ fine-grained Cognito reason
+                                switch cognito {
+                                case .userNotConfirmed:
+                                    self.authErrorMessage = "Please check your email for a verification code to complete signup."
+                                
+                                case .usernameExists:
+                                    self.authErrorMessage = "This email is already registered. Please use a different email or login."
+                                
+                                default:
+                                    self.authErrorMessage = "Registration failed: \(cognito.errorDescription)"
+                                }
+                            } else {
+                                self.authErrorMessage = "Registration failed: \(amplifyError.errorDescription)"
+                            }
+                        
+                        default:
+                            self.authErrorMessage = "Registration failed: \(amplifyError.errorDescription)"
+                        }
+                    } else {
+                        self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
                     }
                 }
             }
