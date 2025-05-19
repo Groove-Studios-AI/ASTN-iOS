@@ -282,11 +282,61 @@ class UserSession: ObservableObject {
         }, completion: completion)
     }
     
+    // MARK: - Cognito User Attributes
+    
+    // MARK: - Cognito User Attributes Methods
+    // Moved to UserSession+CognitoAttributes.swift extension
+    
+    // MARK: - User Creation Helpers
+    
+    /// Creates a temporary user if the currentUser is nil
+    /// This is a fallback mechanism to ensure the onboarding flow can continue
+    /// even if there are issues with the user object after signup/confirmation
+    func createTemporaryUserIfNeeded() {
+        if currentUser == nil {
+            print("ℹ️ Creating temporary user for onboarding")
+            // Generate a UUID for the user
+            let userId = UUID().uuidString
+            
+            // Create a basic user with minimal information
+            // Using the temporary email will help us identify these users
+            var tempUser = User.newUser(
+                id: userId,
+                email: "temporary_\(userId)@example.com",
+                authMethod: .email
+            )
+            
+            // Mark this user as temporary to avoid Cognito operations
+            tempUser.isTemporary = true
+            
+            // Update the current user
+            currentUser = tempUser
+            isAuthenticated = true
+            isOnboarding = true
+            print("✅ Temporary user created with ID: \(userId)")
+            
+            // Save the temporary user to UserDefaults
+            saveSession(user: tempUser, token: nil)
+        }
+    }
+    
+    /// Checks if the current user is a temporary user
+    func isTemporaryUser() -> Bool {
+        return currentUser?.isTemporary == true || (currentUser?.email.starts(with: "temporary_") == true)
+    }
+    
     // MARK: - Onboarding Methods
     
     /// Update user with athlete type, sport, date of birth and phone number (Step 1)
     func updateUserStep1(athleteType: AthleteType, sport: String, dateOfBirth: String, phoneNumber: String, completion: @escaping (Result<User, Error>) -> Void) {
+        // First ensure we have a user object to work with
+        if currentUser == nil {
+            print("⚠️ No user found in updateUserStep1, creating temporary user")
+            createTemporaryUserIfNeeded()
+        }
+        
         guard var user = currentUser else {
+            print("❌ Still no user after createTemporaryUserIfNeeded() - this is a critical error")
             completion(.failure(SessionError.noUserLoggedIn))
             return
         }

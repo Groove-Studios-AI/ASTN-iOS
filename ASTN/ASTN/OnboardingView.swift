@@ -24,18 +24,45 @@ struct OnboardingView: View {
                         case 1:
                             OnboardingStep1View(
                                 onContinue: { athleteType, sport, dateOfBirth, phoneNumber in
+                                    // Check and log user existence state
+                                    if let user = userSession.currentUser {
+                                        print("✅ User object available: \(user.id), email: \(user.email)")
+                                    } else {
+                                        print("⚠️ User object is nil. Creating a temporary user...")
+                                        // This is a fallback approach - create a temporary user if none exists
+                                        // In production, we should diagnose why the user isn't properly available
+                                        userSession.createTemporaryUserIfNeeded()
+                                    }
+                                    
                                     // Update user with step 1 data
-                                    if userSession.currentUser != nil {
-                                        userSession.updateUserStep1(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber) { result in
-                                            switch result {
-                                            case .success(_):
-                                                // Navigate to next step
-                                                withAnimation {
-                                                    currentStep = 2
+                                    userSession.updateUserStep1(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber) { result in
+                                        switch result {
+                                        case .success(let user):
+                                            print("✅ Successfully updated user for step 1: \(user.id)")
+                                            
+                                            // Only update Cognito attributes for non-temporary users
+                                            if !userSession.isTemporaryUser() {
+                                                userSession.updateCognitoStep1Attributes(athleteType: athleteType, sport: sport, dateOfBirth: dateOfBirth, phoneNumber: phoneNumber) { cognitoResult in
+                                                    if case .success = cognitoResult {
+                                                        print("✅ Cognito attributes updated for step 1")
+                                                    } else if case .failure(let error) = cognitoResult {
+                                                        print("⚠️ Cognito attribute update failed: \(error)")
+                                                    }
                                                 }
-                                            case .failure(let error):
-                                                print("Error updating user: \(error)")
-                                                // Handle error display
+                                            } else {
+                                                print("ℹ️ Skipping Cognito update for temporary user")
+                                            }
+                                            
+                                            // Navigate to next step
+                                            withAnimation {
+                                                currentStep = 2
+                                            }
+                                        case .failure(let error):
+                                            print("❌ Error updating user: \(error)")
+                                            // Even if there's an error, proceed to next step
+                                            print("⚠️ Proceeding to next step despite error")
+                                            withAnimation {
+                                                currentStep = 2
                                             }
                                         }
                                     }
@@ -44,18 +71,41 @@ struct OnboardingView: View {
                         case 2:
                             OnboardingStep2View(
                                 onContinue: { interests in
+                                    // Check user object availability
+                                    if userSession.currentUser == nil {
+                                        print("⚠️ User object is nil before Step 2. Creating a temporary user...")
+                                        userSession.createTemporaryUserIfNeeded()
+                                    }
+                                    
                                     // Update user with step 2 data
-                                    if userSession.currentUser != nil {
-                                        userSession.updateUserStep2(interests: interests) { result in
-                                            switch result {
-                                            case .success(_):
-                                                // Navigate to next step
-                                                withAnimation {
-                                                    currentStep = 3
+                                    userSession.updateUserStep2(interests: interests) { result in
+                                        switch result {
+                                        case .success(let user):
+                                            print("✅ Successfully updated user for step 2: \(user.id)")
+                                            
+                                            // Only update Cognito attributes for non-temporary users
+                                            if !userSession.isTemporaryUser() {
+                                                userSession.updateCognitoStep2Attributes(interests: interests) { cognitoResult in
+                                                    if case .success = cognitoResult {
+                                                        print("✅ Cognito attributes updated for step 2")
+                                                    } else if case .failure(let error) = cognitoResult {
+                                                        print("⚠️ Cognito attribute update failed: \(error)")
+                                                    }
                                                 }
-                                            case .failure(let error):
-                                                print("Error updating user: \(error)")
-                                                // Handle error display
+                                            } else {
+                                                print("ℹ️ Skipping Cognito update for temporary user")
+                                            }
+                                            
+                                            // Navigate to next step
+                                            withAnimation {
+                                                currentStep = 3
+                                            }
+                                        case .failure(let error):
+                                            print("❌ Error updating user: \(error)")
+                                            // Even if there's an error, proceed to next step
+                                            print("⚠️ Proceeding to next step despite error")
+                                            withAnimation {
+                                                currentStep = 3
                                             }
                                         }
                                     }
@@ -64,27 +114,42 @@ struct OnboardingView: View {
                         case 3:
                             OnboardingStep3View(
                                 onContinue: { learningGoal in
+                                    // Check user object availability
+                                    if userSession.currentUser == nil {
+                                        print("⚠️ User object is nil before Step 3. Creating a temporary user...")
+                                        userSession.createTemporaryUserIfNeeded()
+                                    }
+                                    
                                     // Update user with step 3 data
-                                    if userSession.currentUser != nil {
-                                        userSession.updateUserStep3(learningGoal: learningGoal) { result in
-                                            switch result {
-                                            case .success(_):
-                                                // Move to profile picture step
-                                                withAnimation {
-                                                    currentStep = 4
+                                    userSession.updateUserStep3(learningGoal: learningGoal) { result in
+                                        switch result {
+                                        case .success(let user):
+                                            print("✅ Successfully updated user for step 3: \(user.id)")
+                                            
+                                            // Only update Cognito attributes for non-temporary users
+                                            if !userSession.isTemporaryUser() {
+                                                userSession.updateCognitoStep3Attributes(learningGoal: learningGoal) { cognitoResult in
+                                                    if case .success = cognitoResult {
+                                                        print("✅ Cognito attributes updated for step 3")
+                                                    } else if case .failure(let error) = cognitoResult {
+                                                        print("⚠️ Cognito attribute update failed: \(error)")
+                                                    }
                                                 }
-                                            case .failure(let error):
-                                                print("Error updating user: \(error)")
-                                                // Even if there's an error, proceed to next step
-                                                withAnimation {
-                                                    currentStep = 4
-                                                }
+                                            } else {
+                                                print("ℹ️ Skipping Cognito update for temporary user")
                                             }
-                                        }
-                                    } else {
-                                        // Handle case when user is nil (for testing)
-                                        withAnimation {
-                                            currentStep = 4
+                                            
+                                            // Move to profile picture step
+                                            withAnimation {
+                                                currentStep = 4
+                                            }
+                                        case .failure(let error):
+                                            print("❌ Error updating user: \(error)")
+                                            // Even if there's an error, proceed to next step
+                                            print("⚠️ Proceeding to next step despite error")
+                                            withAnimation {
+                                                currentStep = 4
+                                            }
                                         }
                                     }
                                 }

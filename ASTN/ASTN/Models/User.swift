@@ -46,6 +46,9 @@ struct User: Codable, Identifiable {
     var email: String
     var name: String?
     
+    // Used to track temporary users created during onboarding
+    var isTemporary: Bool = false
+    
     // Shorthand for initializing a new user model instance from signup
     static func newUser(id: String, email: String, authMethod: AuthMethod) -> User {
         return User(
@@ -88,6 +91,7 @@ struct User: Codable, Identifiable {
         self.accountTier = .freemium
         self.device = DeviceInfo()
         self.notifications = NotificationPreferences()
+        self.isTemporary = false
     }
 }
 
