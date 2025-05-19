@@ -550,7 +550,7 @@ struct SignupScreenView: View {
         let userSession = UserSession.shared
         
         // Register the user with AWS Cognito via UserSession
-        userSession.registerUser(email: email, password: password) { result in
+        userSession.registerUser(email: email, password: password, name: name) { result in
             DispatchQueue.main.async {
                 self.isLoading = false
                 

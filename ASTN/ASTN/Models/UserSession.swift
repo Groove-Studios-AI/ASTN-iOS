@@ -3,6 +3,8 @@ import Combine
 import Amplify
 import AWSCognitoAuthPlugin
 import AWSAPIPlugin
+// Ensure we can access SessionError from APIService
+// No need for extra imports in the same module
 
 // Helper bridge for migrating from callbacks to async/await
 extension Amplify {
@@ -75,8 +77,11 @@ class UserSession: ObservableObject {
     
     /// Register a new user with email and password
     /// Async implementation for registration
-    private func registerUserAsync(email: String, password: String) async throws -> User {
-        let userAttributes = [AuthUserAttribute(.email, value: email)]
+    private func registerUserAsync(email: String, password: String, name: String) async throws -> User {
+        let userAttributes = [
+            AuthUserAttribute(.email, value: email),
+            AuthUserAttribute(.name, value: name)
+        ]
         let options = AuthSignUpRequest.Options(userAttributes: userAttributes)
         
         let signUpResult = try await Amplify.Auth.signUp(
@@ -90,14 +95,17 @@ class UserSession: ObservableObject {
         }
         
         print("✅ Sign up successful - user confirmed automatically")
-        return try await loginAsync(email: email, password: password)
+        // Set name in new user after login
+        var user = try await loginAsync(email: email, password: password)
+        user.name = name
+        return user
     }
     
     // Legacy wrapper for backward compatibility
-    func registerUser(email: String, password: String, completion: @escaping (Result<User, Error>) -> Void) {
+    func registerUser(email: String, password: String, name: String, completion: @escaping (Result<User, Error>) -> Void) {
         Amplify.Legacy.wrap({ [weak self] in
             guard let self = self else { throw SessionError.unknown }
-            return try await self.registerUserAsync(email: email, password: password)
+            return try await self.registerUserAsync(email: email, password: password, name: name)
         }, completion: completion)
     }
     
@@ -548,94 +556,4 @@ class UserSession: ObservableObject {
     }
 }
 
-// Custom errors
-enum SessionError: Error {
-    case noUserLoggedIn
-    case invalidUserData
-    case networkError
-    case sessionExpired
-    case confirmationRequired
-    case confirmationFailed
-    case authenticationFailed
-    case userNotFound
-    case userAlreadyExists
-    case signUpFailed
-    case signInFailed
-    case unknown
-}
-
-// Simplified API service (mock implementation)
-class APIService {
-    
-    func uploadProfilePicture(userId: String, imageData: Data, token: String?, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Validate token
-        guard token != nil else {
-            completion(.failure(SessionError.sessionExpired))
-            return
-        }
-        
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Mock successful response with image URL
-            let imageUrl = "https://api.astn.app/users/\(userId)/profile-picture.jpg"
-            completion(.success(["url": imageUrl]))
-        }
-    }
-    
-    func registerUser(email: String, password: String, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Mock successful response
-            let userId = UUID().uuidString
-            let token = "jwt-token-\(UUID().uuidString)"
-            
-            let response: [String: Any] = [
-                "user": [
-                    "id": userId,
-                    "email": email,
-                    "authMethod": "email",
-                    "createdAt": Date().timeIntervalSince1970
-                ],
-                "token": token
-            ]
-            
-            completion(.success(response))
-        }
-    }
-    
-    func login(email: String, password: String, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Mock successful response
-            let userId = UUID().uuidString
-            let token = "jwt-token-\(UUID().uuidString)"
-            
-            let response: [String: Any] = [
-                "user": [
-                    "id": userId,
-                    "email": email,
-                    "authMethod": "email",
-                    "createdAt": Date().timeIntervalSince1970,
-                    "onboarding": ["surveyCompleted": false]
-                ],
-                "token": token
-            ]
-            
-            completion(.success(response))
-        }
-    }
-    
-    func updateUser(userId: String, data: [String: Any], token: String?, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Validate token
-        guard token != nil else {
-            completion(.failure(SessionError.sessionExpired))
-            return
-        }
-        
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Mock successful response
-            completion(.success(["success": true]))
-        }
-    }
-}
+// Import SessionError from APIService
