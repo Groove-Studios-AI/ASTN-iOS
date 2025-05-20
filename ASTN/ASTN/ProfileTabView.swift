@@ -1,10 +1,6 @@
 import SwiftUI
 
 struct ProfileTabView: View {
-    // Add UserSession to access persisted user data
-    @ObservedObject private var userSession = UserSession.shared
-    @State private var showDebugInfo = false
-    
     // State variables
     @State private var selectedInterests: Set<String> = ["Fitness", "Community"]
     @State private var currentTime = Date()
@@ -75,31 +71,6 @@ struct ProfileTabView: View {
                             
                             // Gallery Section
                             gallerySection
-                            
-                            // Debug section - Divider
-                            Divider()
-                                .background(Color.white.opacity(0.2))
-                                .padding(.vertical, 20)
-                            
-                            // Debug section toggle button
-                            Button(action: {
-                                showDebugInfo.toggle()
-                            }) {
-                                Text(showDebugInfo ? "Hide Onboarding Data" : "Show Onboarding Data")
-                                    .font(.custom("Magistral", size: 14))
-                                    .foregroundColor(.black)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(Color.white.opacity(0.8))
-                                    .cornerRadius(8)
-                            }
-                            .padding(.bottom, 15)
-                            
-                            // Debug info section
-                            if showDebugInfo {
-                                debugInfoContent(userSession: userSession)
-                                    .padding(.bottom, 20)
-                            }
                         }
                         .padding(.horizontal, 16)
                         
@@ -386,94 +357,6 @@ struct ProfileTabView: View {
 }
 
 
-    
-    // MARK: - Debug Information View
-    
-    private func debugInfoContent(userSession: UserSession) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Onboarding Data")
-                .font(.custom("Magistral-Bold", size: 18))
-                .foregroundColor(.white)
-            
-            // Only show user data if available
-            if let user = userSession.currentUser {
-                Group {
-                    // Display basic user info
-                    infoRow(label: "User ID", value: user.id)
-                    infoRow(label: "Email", value: user.email)
-                    infoRow(label: "Account Type", value: user.isTemporary ? "Temporary" : "Permanent")
-                    
-                    // Step 1 Data
-                    Divider().background(Color.white.opacity(0.3))
-                    Text("Step 1 Data")
-                        .font(.custom("Magistral-Bold", size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.top, 5)
-                    
-                    infoRow(label: "Athlete Type", value: user.athleteType?.rawValue ?? "Not Set")
-                    infoRow(label: "Sport", value: user.sport ?? "Not Set")
-                    infoRow(label: "Age", value: user.age != nil ? "\(user.age!)" : "Not Set")
-                    
-                    // Step 2 Data
-                    Divider().background(Color.white.opacity(0.3))
-                    Text("Step 2 Data")
-                        .font(.custom("Magistral-Bold", size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.top, 5)
-                    
-                    // Show interests as a comma-separated list
-                    let interestsList = user.interests?.map { $0.rawValue }.joined(separator: ", ") ?? "None"
-                    infoRow(label: "Interests", value: interestsList)
-                    
-                    // Step 3 Data
-                    Divider().background(Color.white.opacity(0.3))
-                    Text("Step 3 Data")
-                        .font(.custom("Magistral-Bold", size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.top, 5)
-                    
-                    infoRow(label: "Mindset Profile", value: user.mindsetProfile?.rawValue ?? "Not Set")
-                    
-                    // Onboarding Progress
-                    Divider().background(Color.white.opacity(0.3))
-                    Text("Onboarding Progress")
-                        .font(.custom("Magistral-Bold", size: 16))
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.top, 5)
-                    
-                    infoRow(label: "Current Step", value: "\(user.onboarding.currentStep)/\(user.onboarding.totalSteps)")
-                    infoRow(label: "Steps Completed", value: "\(user.onboarding.stepsCompleted)")
-                    infoRow(label: "Survey Completed", value: user.onboarding.surveyCompleted ? "Yes" : "No")
-                }
-            } else {
-                Text("No user data available!")
-                    .font(.custom("Magistral", size: 16))
-                    .foregroundColor(.red)
-            }
-        }
-        .padding(15)
-        .background(Color.black.opacity(0.7))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-        )
-    }
-    
-    // Helper function to create info rows
-    private func infoRow(label: String, value: String) -> some View {
-        HStack(alignment: .top) {
-            Text("\(label):")
-                .font(.custom("Magistral", size: 14))
-                .foregroundColor(.white.opacity(0.7))
-                .frame(width: 120, alignment: .leading)
-            
-            Text(value)
-                .font(.custom("Magistral", size: 14))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
     
 // MARK: - Supporting Structures
 
