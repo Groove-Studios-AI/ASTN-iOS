@@ -32,7 +32,10 @@ struct LoginScreenView: View {
     }
     
     private var isPasswordValid: Bool {
-        return password.count >= 6
+        return password.count >= 8 &&
+            password.rangeOfCharacter(from: .lowercaseLetters) != nil &&
+            password.rangeOfCharacter(from: .uppercaseLetters) != nil &&
+            password.rangeOfCharacter(from: .decimalDigits) != nil
     }
     
     private var isFormValid: Bool {
@@ -346,7 +349,7 @@ struct LoginScreenView: View {
         if password.isEmpty {
             passwordError = nil
         } else if !isPasswordValid {
-            passwordError = "Password must be at least 6 characters"
+            passwordError = "Password must be at least 8 characters and include upper-case, lower-case, and a number"
         } else {
             passwordError = nil
         }
