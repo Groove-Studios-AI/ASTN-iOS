@@ -186,7 +186,35 @@ class UserSession: ObservableObject {
     
     /// Async implementation of logout
     private func logoutAsync() async {
-        await AmplifyConfigAsync.signOut()
+        // First, verify current auth status to prevent edge cases
+        do {
+            let session = try await Amplify.Auth.fetchAuthSession()
+            if !session.isSignedIn {
+                print("⚠️ No user is currently signed in")
+            }
+        } catch {
+            print("❌ Error checking auth session before logout: \(error)")
+        }
+        
+        // Call the sign out function
+        _ = await AmplifyConfigAsync.signOut()
+        
+        // Force clear the Amplify auth plugin's cached tokens
+        try? await Task.sleep(nanoseconds: 500_000_000) // Wait 500ms to ensure AWS operations complete
+        
+        // Verify sign out was successful
+        do {
+            let session = try await Amplify.Auth.fetchAuthSession()
+            if session.isSignedIn {
+                print("⚠️ Warning: User is still signed in after logout attempt!")
+                // Try one more time with a different approach
+                _ = await forceSignOut()
+            } else {
+                print("✅ Successfully verified user is signed out")
+            }
+        } catch {
+            print("❌ Error verifying sign out: \(error)")
+        }
         
         // Update UI on main thread
         await MainActor.run {
@@ -196,13 +224,32 @@ class UserSession: ObservableObject {
             isAuthenticated = false
             isOnboarding = false
         }
+        
         clearStoredSession()
+        
+        // Notify the AppCoordinator to return to login screen
+        await MainActor.run {
+            AppCoordinator.shared.switchToLoginFlow()
+        }
+    }
+    
+    /// Force sign out as a fallback method
+    private func forceSignOut() async -> AuthSignOutResult {
+        print("🔄 Attempting force sign out...")
+        // Different sign out approach as fallback
+        return await Amplify.Auth.signOut(options: .init(globalSignOut: false))
     }
     
     /// Logout the current user (legacy wrapper)
-    func logout() {
+    func logout(completion: (() -> Void)? = nil) {
         Task { [weak self] in
             await self?.logoutAsync()
+            // Call completion handler on main thread if provided
+            if let completion = completion {
+                await MainActor.run {
+                    completion()
+                }
+            }
         }
     }
     
@@ -492,6 +539,77 @@ class UserSession: ObservableObject {
         } catch {
             print("Error loading user from storage: \(error)")
             return nil
+        }
+    }
+    
+    /// Restore user session from both Amplify and local storage
+    /// This method is designed to be called during app startup to enable auto-login
+    func restoreUserSession() async {
+        print("🔄 Attempting to restore user session...")
+        
+        do {
+            // 1. Check if Amplify says we're signed in
+            let session = try await Amplify.Auth.fetchAuthSession()
+            let isSignedIn = session.isSignedIn
+            
+            if !isSignedIn {
+                print("⚠️ Amplify reports no active auth session")
+                await MainActor.run {
+                    self.isAuthenticated = false
+                    self.currentUser = nil
+                }
+                return
+            }
+            
+            // 2. Get Cognito user attributes
+            let attributes = try await Amplify.Auth.fetchUserAttributes()
+            print("✅ Retrieved \(attributes.count) user attributes from Cognito")
+            
+            // 3. Get current Cognito user ID
+            guard let userId = await AmplifyConfigAsync.getCurrentUserId() else {
+                print("⚠️ Could not retrieve user ID from Amplify")
+                return
+            }
+            
+            // 4. Try to load user from local storage first
+            var user = self.loadUserFromStorage()
+            
+            // 5. Verify user ID matches or create new user object
+            if user == nil || user?.id != userId {
+                // Create a basic user from Cognito data
+                print("ℹ️ Creating new user object from Cognito data")
+                var createdUser = User.newUser(
+                    id:    userId,
+                    email: attributes.first(where: { $0.key == .email })?.value ?? "",
+                    authMethod: .email                       // mandatory parameter
+                )
+                
+                // Fill any optional profile data you want to keep
+                createdUser.name = attributes.first(where: { $0.key == .name })?.value ?? ""
+                createdUser.onboarding.surveyCompleted = true     // mark survey done
+                // createdUser.profilePicture = nil  // already nil by default
+                
+                user = createdUser
+            }
+            
+            if let user = user {
+                // Update UI on main thread
+                await MainActor.run {
+                    self.currentUser = user
+                    self.isAuthenticated = true
+                    self.isOnboarding = !user.onboarding.surveyCompleted
+                    
+                    // Re-save the user to ensure it's current
+                    self.saveSession(user: user, token: nil)
+                }
+                print("✅ Successfully restored user session for: \(user.id)")
+            }
+        } catch {
+            print("❌ Error restoring user session: \(error)")
+            await MainActor.run {
+                self.isAuthenticated = false
+                self.currentUser = nil
+            }
         }
     }
     

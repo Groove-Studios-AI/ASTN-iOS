@@ -36,6 +36,15 @@ class AppCoordinator {
         presentView(loginView)
     }
     
+    // Specific method for logout - Switch to login screen
+    func switchToLoginFlow() {
+        print("AppCoordinator: Switching to login screen after logout")
+        // Use the shared environment modifier
+        let loginView = LoginScreenView().withSharedEnvironment()
+        
+        presentView(loginView)
+    }
+    
     // Switch to onboarding flow after signup
     func switchToOnboardingFlow() {
         print("AppCoordinator: Switching to onboarding flow")
