@@ -13,7 +13,8 @@ struct SignupScreenView: View {
     @Environment(\.presentationMode) var presentationMode
     
     // State variables for form fields
-    @State private var name: String = ""
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
@@ -21,7 +22,8 @@ struct SignupScreenView: View {
     @State private var isConfirmPasswordVisible: Bool = false
     
     // Validation states
-    @State private var nameError: String? = nil
+    @State private var firstNameError: String? = nil
+    @State private var lastNameError: String? = nil
     @State private var emailError: String? = nil
     @State private var passwordError: String? = nil
     @State private var confirmPasswordError: String? = nil
@@ -32,8 +34,12 @@ struct SignupScreenView: View {
     @State private var emailForConfirmation: String = ""
     
     // Computed properties for validation
-    private var isNameValid: Bool {
-        return name.count >= 2
+    private var isFirstNameValid: Bool {
+        return firstName.count >= 2
+    }
+    
+    private var isLastNameValid: Bool {
+        return lastName.count >= 2
     }
     
     private var isEmailValid: Bool {
@@ -54,7 +60,7 @@ struct SignupScreenView: View {
     }
     
     private var isFormValid: Bool {
-        return isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid
+        return isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid
     }
     
     var body: some View {
@@ -90,13 +96,13 @@ struct SignupScreenView: View {
                             .padding(.bottom, 30)
                             .padding(.top, 20)
                         
-                        // Name Field
+                        // First Name Field
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Name")
+                            Text("First Name")
                                 .font(.custom("Magistral", size: 14))
                                 .foregroundColor(.white)
                             
-                            TextField("", text: $name)
+                            TextField("", text: $firstName)
                                 .font(.custom("Magistral", size: 14))
                                 .foregroundColor(.white)
                                 .padding()
@@ -104,22 +110,64 @@ struct SignupScreenView: View {
                                 .cornerRadius(8)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(nameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                        .stroke(firstNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
                                 )
-                                .onChange(of: name) { _ in 
-                                    validateName()
-                                }
-                                .placeholder(when: name.isEmpty) {
-                                    Text("Enter Your Name")
+                                .placeholder(when: firstName.isEmpty) {
+                                    Text("Enter Your First Name")
                                         .font(.custom("Magistral", size: 14))
                                         .foregroundColor(.gray)
                                         .padding(.leading, 16)
                                 }
+                                .onChange(of: firstName) { _ in
+                                    validateFirstName()
+                                }
+                            
                         }
                         .padding(.bottom, 6)
                         
-                        // Display name error if exists
-                        if let error = nameError {
+                        // Display first name error if exists
+                        if let error = firstNameError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
+                        }
+                        
+                        
+                        // Last Name Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Last Name")
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                            
+                            TextField("", text: $lastName)
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(lastNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                )
+                                .placeholder(when: lastName.isEmpty) {
+                                    Text("Enter Your Last Name")
+                                        .font(.custom("Magistral", size: 14))
+                                        .foregroundColor(.gray)
+                                        .padding(.leading, 16)
+                                }
+                                .onChange(of: lastName) { _ in
+                                    validateLastName()
+                                }
+                            
+                        }
+                        .padding(.bottom, 6)
+                        
+                        // Display last name error if exists
+                        if let error = lastNameError {
                             Text(error)
                                 .font(.custom("Magistral", size: 12))
                                 .foregroundColor(errorRed)
@@ -424,28 +472,6 @@ struct SignupScreenView: View {
                                         .stroke(Color.white, lineWidth: 1)
                                 )
                             }
-                            
-                            // LinkedIn
-                            Button(action: {
-                                // LinkedIn signup action
-                            }) {
-                                HStack {
-                                    Image("logos_linkedin-icon")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 20, height: 20)
-                                    
-                                    Text("Continue with LinkedIn")
-                                        .font(.custom("Magistral", size: 14))
-                                        .foregroundColor(.white)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.white, lineWidth: 1)
-                                )
-                            }
                         }
                         .padding(.bottom, 40)
                     }
@@ -469,13 +495,29 @@ struct SignupScreenView: View {
     
     // MARK: - Validation Methods
     
-    private func validateName() {
-        if name.isEmpty {
-            nameError = nil
-        } else if !isNameValid {
-            nameError = "Name must be at least 2 characters"
+    private func validateFirstName() {
+        if firstName.isEmpty {
+            firstNameError = nil
+            return
+        }
+        
+        if firstName.count < 2 {
+            firstNameError = "First name must be at least 2 characters"
         } else {
-            nameError = nil
+            firstNameError = nil
+        }
+    }
+    
+    private func validateLastName() {
+        if lastName.isEmpty {
+            lastNameError = nil
+            return
+        }
+        
+        if lastName.count < 2 {
+            lastNameError = "Last name must be at least 2 characters"
+        } else {
+            lastNameError = nil
         }
     }
     
@@ -511,14 +553,19 @@ struct SignupScreenView: View {
     
     private func validateForm() -> Bool {
         // Force validation of all fields
-        validateName()
+        validateFirstName()
+        validateLastName()
         validateEmail()
         validatePassword()
         validateConfirmPassword()
         
         // Check if fields are not empty
-        if name.isEmpty {
-            nameError = "Name is required"
+        if firstName.isEmpty {
+            firstNameError = "First name is required"
+        }
+        
+        if lastName.isEmpty {
+            lastNameError = "Last name is required"
         }
         
         if email.isEmpty {
@@ -533,7 +580,7 @@ struct SignupScreenView: View {
             confirmPasswordError = "Please confirm your password"
         }
         
-        return isFormValid && !name.isEmpty && !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
+        return isFormValid && !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
     }
     
     // MARK: - Authentication Methods
@@ -550,7 +597,8 @@ struct SignupScreenView: View {
         let userSession = UserSession.shared
         
         // Register the user with AWS Cognito via UserSession
-        userSession.registerUser(email: email, password: password, name: name) { result in
+        let fullName = "\(firstName) \(lastName)"
+        userSession.registerUser(email: email, password: password, name: fullName) { result in
             DispatchQueue.main.async {
                 self.isLoading = false
                 
