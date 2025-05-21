@@ -28,7 +28,7 @@ struct MainTabView: View {
             
             WorkoutsTabView()
                 .tabItem {
-                    Image("workouts_tabIcon")
+                    Image("target")
                         .renderingMode(.template)
                     Text("Reps")
                 }
