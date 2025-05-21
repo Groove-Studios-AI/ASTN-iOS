@@ -20,7 +20,7 @@ struct MainTabView: View {
             
             PerformanceTabView()
                 .tabItem {
-                    Image("Performance_tabIcon")
+                    Image("performanceTab")
                         .renderingMode(.template)
                     Text("Performance")
                 }

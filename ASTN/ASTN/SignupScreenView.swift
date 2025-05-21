@@ -108,6 +108,8 @@ struct SignupScreenView: View {
                                 .padding()
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.words)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(firstNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -149,6 +151,8 @@ struct SignupScreenView: View {
                                 .padding()
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.words)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(lastNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -190,6 +194,8 @@ struct SignupScreenView: View {
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
                                 .keyboardType(.emailAddress)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.never)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(emailError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -231,6 +237,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -252,6 +260,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -305,6 +315,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -325,6 +337,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
