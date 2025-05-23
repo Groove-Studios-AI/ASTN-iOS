@@ -33,13 +33,13 @@ struct ProgressTrackView: View {
                     .frame(width: iconSize, height: iconSize)
                     .offset(y: 15)
                 
-                // Dollar bag - animated element
-                Image("dollarBag")
+                // Speed car - animated element
+                Image("speedCar")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: iconSize, height: iconSize)
+                    .frame(width: iconSize * 2, height: iconSize * 2)
                     // Position based on progress (0.0-1.0), moves up as progress increases
-                    .offset(y: calculateMoneyBagPosition())
+                    .offset(y: calculateMovingElementPosition())
                 
                 // Progress fill-in at bottom
                 Image("SpeedProgressFillIn")
@@ -55,8 +55,8 @@ struct ProgressTrackView: View {
         .animation(.spring(response: 0.8, dampingFraction: 0.7, blendDuration: 0.6), value: progress)
     }
     
-    // Calculate the vertical position of the dollar bag
-    private func calculateMoneyBagPosition() -> CGFloat {
+    // Calculate the vertical position of the moving element
+    private func calculateMovingElementPosition() -> CGFloat {
         // Animation starts at bottom and moves to top as progress increases
         let startPosition: CGFloat = trackHeight - 100  // Position at the bottom above the fill-in
         let endPosition: CGFloat = 50                   // Position at the top near piggy bank
