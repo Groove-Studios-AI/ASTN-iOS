@@ -1,8 +1,12 @@
 import SwiftUI
 import UIKit
 import Combine
+import Amplify
+import AWSCognitoAuthPlugin
 
 struct LoginScreenView: View {
+    // Add user session for authentication
+    @ObservedObject private var userSession = UserSession.shared
     // Define brand colors
     private let brandBlack = Color.fromHex("#0A0A0A")
     private let brandBlue = Color.fromHex("#1A2196")
@@ -28,7 +32,10 @@ struct LoginScreenView: View {
     }
     
     private var isPasswordValid: Bool {
-        return password.count >= 6
+        return password.count >= 8 &&
+            password.rangeOfCharacter(from: .lowercaseLetters) != nil &&
+            password.rangeOfCharacter(from: .uppercaseLetters) != nil &&
+            password.rangeOfCharacter(from: .decimalDigits) != nil
     }
     
     private var isFormValid: Bool {
@@ -72,6 +79,8 @@ struct LoginScreenView: View {
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
                                 .keyboardType(.emailAddress)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.never)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(emailError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -113,6 +122,8 @@ struct LoginScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -133,6 +144,8 @@ struct LoginScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -238,9 +251,11 @@ struct LoginScreenView: View {
                         
                         // Social login buttons with proper logos
                         VStack(spacing: 16) {
-                            // Google
+                            // Google - disabled for MVP
                             Button(action: {
-                                // Google login action
+                                // Show coming soon message for MVP
+                                showAuthError = true
+                                authErrorMessage = "Social login coming soon!"
                             }) {
                                 HStack {
                                     Image("logos_google")
@@ -260,9 +275,11 @@ struct LoginScreenView: View {
                                 )
                             }
                             
-                            // Instagram
+                            // Instagram - disabled for MVP
                             Button(action: {
-                                // Instagram login action
+                                // Show coming soon message for MVP
+                                showAuthError = true
+                                authErrorMessage = "Social login coming soon!"
                             }) {
                                 HStack {
                                     Image("logos_instagram")
@@ -282,9 +299,11 @@ struct LoginScreenView: View {
                                 )
                             }
                             
-                            // LinkedIn
+                            // LinkedIn - disabled for MVP
                             Button(action: {
-                                // LinkedIn login action
+                                // Show coming soon message for MVP
+                                showAuthError = true
+                                authErrorMessage = "Social login coming soon!"
                             }) {
                                 HStack {
                                     Image("logos_linkedin-icon")
@@ -336,7 +355,7 @@ struct LoginScreenView: View {
         if password.isEmpty {
             passwordError = nil
         } else if !isPasswordValid {
-            passwordError = "Password must be at least 6 characters"
+            passwordError = "Password must be at least 8 characters and include upper-case, lower-case, and a number"
         } else {
             passwordError = nil
         }
@@ -361,47 +380,71 @@ struct LoginScreenView: View {
     
     // MARK: - Authentication Methods
     
+    // MARK: - Authentication
+    
     private func login() {
-        // Reset any previous auth errors
-        showAuthError = false
+        showAuthError   = false
         authErrorMessage = ""
-        
-        // Show loading state
-        isLoading = true
-        
-        // Simulate network delay - in a real app, this would be an API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // This is where you would implement actual authentication logic
-            // For now, we'll simulate a successful login for the demo
-            // In a real implementation, you would handle success and failure cases
-            
-            if email.lowercased() == "error@example.com" {
-                // Simulate an authentication error
-                showAuthError = true
-                authErrorMessage = "Invalid email or password. Please try again."
+        isLoading       = true
+
+        userSession.login(email: email, password: password) { result in
+            // hop to the main actor for every UI update
+            Task { @MainActor in
                 isLoading = false
-            } else {
-                // Success case - proceed to main interface
-                isLoading = false
-                AppCoordinator.shared.switchToMainInterface()
+
+                switch result {
+                case .success(let user):
+                    print("✅ Login successful for user:", user.id)
+
+                    // always land on the dashboard tab
+                    AppState.shared.selectedTabIndex = 0
+                    AppCoordinator.shared.switchToMainInterface()
+
+                case .failure(let error):
+                    handleAuthError(error)
+                }
             }
         }
     }
-}
 
-// Placeholder extension to help with empty text fields
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
+    /// Show a friendly error message for any kind of login failure
+    @MainActor
+    private func handleAuthError(_ error: Error) {
+        showAuthError = true
+
+        if let sessionError = error as? SessionError {
+            switch sessionError {
+            case .authenticationFailed:
+                authErrorMessage = "Invalid e-mail or password. Please try again."
+            case .confirmationRequired:
+                authErrorMessage = "Please confirm your e-mail before logging in."
+            default:
+                authErrorMessage = error.localizedDescription
+            }
+            return
         }
+
+        if let authError = error as? AuthError,
+           case .service(let message, _, let underlying) = authError,
+           let cognitoError = underlying as? AWSCognitoAuthError
+        {
+            switch cognitoError {
+            case .userNotFound:
+                authErrorMessage = "No account exists for this e-mail."
+            case .userNotConfirmed:
+                authErrorMessage = "Account not confirmed. Check your inbox."
+            default:
+                authErrorMessage = "Service error: \(message)"
+            }
+            return
+        }
+
+        authErrorMessage = "Login failed: \(error.localizedDescription)"
+        print("❌ Login error: \(error)")
     }
 }
+
+// Using the placeholder extension from ViewExtensions.swift
 
 struct LoginScreenView_Previews: PreviewProvider {
     static var previews: some View {

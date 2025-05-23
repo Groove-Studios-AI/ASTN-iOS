@@ -1,14 +1,15 @@
 import SwiftUI
+import Combine
 
 struct MainTabView: View {
-    @ObservedObject private var appState = AppState.shared
+    @EnvironmentObject var appState: AppState
     
     // Brand colors
     private let brandBlue = Color.fromHex("#1A2196")
     private let brandGold = Color.fromHex("#E8D5B5")  // Champagne color
     
     var body: some View {
-        TabView(selection: $appState.selectedTab) {
+        TabView(selection: $appState.selectedTabIndex) {
             DashboardTabView()
                 .tabItem {
                     Image("dash_tabIcon")
@@ -19,7 +20,7 @@ struct MainTabView: View {
             
             PerformanceTabView()
                 .tabItem {
-                    Image("Performance_tabIcon")
+                    Image("performanceTab")
                         .renderingMode(.template)
                     Text("Performance")
                 }
@@ -27,7 +28,7 @@ struct MainTabView: View {
             
             WorkoutsTabView()
                 .tabItem {
-                    Image("workouts_tabIcon")
+                    Image("target")
                         .renderingMode(.template)
                     Text("Reps")
                 }

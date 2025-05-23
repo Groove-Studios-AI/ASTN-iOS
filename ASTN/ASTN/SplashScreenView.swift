@@ -7,11 +7,17 @@
 
 import SwiftUI
 import UIKit
+import Amplify
+import Combine
 
 struct SplashScreenView: View {
+    // Access UserSession to check auth state
+    @ObservedObject private var userSession = UserSession.shared
+    
     @State private var isActive = false
     @State private var opacity = 0.5
     @State private var scale: CGFloat = 0.8
+    @State private var isCheckingSession = false
     
     var body: some View {
         NavigationStack {
@@ -51,13 +57,55 @@ struct SplashScreenView: View {
                     self.scale = 1.0
                 }
                 
-                // Navigate to next screen after a delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    // Use AppCoordinator to switch to welcome screen
-                    print("SplashScreen: Transition timer completed, switching to welcome screen")
+                // Check for existing authenticated session
+                checkAuthSession()
+            }
+        }
+    }
+    
+    // Check if user is already authenticated and navigate appropriately
+    private func checkAuthSession() {
+        guard !isCheckingSession else { return }
+        isCheckingSession = true
+        
+        Task {
+            do {
+                // Check Amplify auth session
+                let session = try await Amplify.Auth.fetchAuthSession()
+                
+                if session.isSignedIn {
+                    // User is already signed in
+                    print("✅ SplashScreen: Found existing authenticated session")
+                    
+                    // Restore user data
+                    await userSession.restoreUserSession()
+                    
+                    // Set dashboard as the selected tab
+                    await MainActor.run {
+                        AppState.shared.selectedTabIndex = 0 // Dashboard tab
+                    }
+                    
+                    // Switch to main interface after animation completes
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        print("✅ SplashScreen: Auto-login successful, going to dashboard")
+                        AppCoordinator.shared.switchToMainInterface()
+                    }
+                } else {
+                    // No existing session, go to welcome screen
+                    print("ℹ️ SplashScreen: No active session found, showing welcome screen")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        AppCoordinator.shared.switchToWelcomeScreen()
+                    }
+                }
+            } catch {
+                // Error checking session, default to welcome screen
+                print("⚠️ SplashScreen: Error checking auth session: \(error)")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     AppCoordinator.shared.switchToWelcomeScreen()
                 }
             }
+            
+            isCheckingSession = false
         }
     }
 }

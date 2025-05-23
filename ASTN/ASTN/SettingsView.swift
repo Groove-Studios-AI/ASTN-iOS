@@ -1,8 +1,32 @@
 import SwiftUI
 import UIKit
+import Combine
 
 struct SettingsView: View {
     @Binding var isPresented: Bool
+    
+    // Access the app state and user session
+    @EnvironmentObject var appState: AppState
+    @State private var showLogoutConfirmation = false
+    
+    // Function to perform logout
+    private func performLogout() {
+        // Dismiss the settings modal
+        isPresented = false
+        
+        // Clear user session data
+        UserSession.shared.logout()
+        
+        // Reset any app state as needed
+        appState.selectedTabIndex = 0
+        appState.activeWorkout = nil
+        
+        // Use AppCoordinator to navigate back to the welcome screen
+        // This ensures proper view hierarchy and environment objects
+        DispatchQueue.main.async {
+            AppCoordinator.shared.switchToWelcomeScreen()
+        }
+    }
     
     var body: some View {
         // Semi-transparent background overlay
@@ -79,8 +103,8 @@ struct SettingsView: View {
                 
                 // Logout button
                 Button(action: {
-                    // Logout action - Reset to welcome screen
-                    resetToWelcomeScreen()
+                    // Show confirmation dialog before logging out
+                    showLogoutConfirmation = true
                 }) {
                     Text("Logout")
                         .font(.custom("Magistral", size: 16))
@@ -93,6 +117,14 @@ struct SettingsView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)
+                .alert("Logout", isPresented: $showLogoutConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Logout", role: .destructive) {
+                        performLogout()
+                    }
+                } message: {
+                    Text("Are you sure you want to log out?")
+                }
             }
             .frame(width: UIScreen.main.bounds.width * 0.9, height: UIScreen.main.bounds.height * 0.6)
             .background(Color.black)
@@ -161,27 +193,11 @@ struct SettingsRowView: View {
 }
 
 // Preview
-// Function to reset to welcome screen
-func resetToWelcomeScreen() {
-    // Create a UIHostingController with WelcomeScreenView
-    let welcomeView = WelcomeScreenView()
-    let hostingController = UIHostingController(rootView: welcomeView)
-    
-    // Get the window scene and set the root view controller
-    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-       let window = windowScene.windows.first {
-        
-        // Optional animation for smoother transition
-        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: {
-            // Set the welcome screen as the new root view controller
-            window.rootViewController = hostingController
-        }, completion: nil)
-    }
-}
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView(isPresented: .constant(true))
+            .environmentObject(AppState.shared)
             .preferredColorScheme(.dark)
     }
 }

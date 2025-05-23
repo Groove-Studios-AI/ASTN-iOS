@@ -1,0 +1,44 @@
+{
+    "UserAgent": "aws-amplify/cli",
+    "Version": "1.0",
+    "auth": {
+        "plugins": {
+            "awsCognitoAuthPlugin": {
+                "CognitoUserPool": {
+                    "Default": {
+                        "PoolId": "us-east-1_jbjAgKJ8x",
+                        "AppClientId": "50o9fjlro9hn8j772guv7vcs1j",
+                        "Region": "us-east-1"
+                    }
+                },
+                "Auth": {
+                    "Default": {
+                        "authenticationFlowType": "USER_SRP_AUTH",
+                        "mfaConfiguration": "OFF",
+                        "mfaTypes": ["SMS"],
+                        "passwordProtectionSettings": {
+                            "passwordPolicyMinLength": 8,
+                            "passwordPolicyCharacters": ["REQUIRES_LOWERCASE", "REQUIRES_UPPERCASE", "REQUIRES_NUMBERS"]
+                        },
+                        "signupAttributes": ["EMAIL"],
+                        "socialProviders": [],
+                        "usernameAttributes": ["EMAIL"],
+                        "verificationMechanisms": ["EMAIL"]
+                    }
+                }
+            }
+        }
+    },
+    "api": {
+        "plugins": {
+            "awsAPIPlugin": {
+                "astnbackend": {
+                    "endpointType": "GraphQL",
+                    "endpoint": "https://b5pqowa6knbcbeyafahjpeouwq.appsync-api.us-east-1.amazonaws.com/graphql",
+                    "region": "us-east-1",
+                    "authorizationType": "AMAZON_COGNITO_USER_POOLS"
+                }
+            }
+        }
+    }
+}

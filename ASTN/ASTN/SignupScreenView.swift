@@ -1,5 +1,7 @@
 import SwiftUI
+import AWSCognitoAuthPlugin
 import Combine
+import Amplify
 
 struct SignupScreenView: View {
     // Define brand colors
@@ -11,7 +13,8 @@ struct SignupScreenView: View {
     @Environment(\.presentationMode) var presentationMode
     
     // State variables for form fields
-    @State private var name: String = ""
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
@@ -19,17 +22,24 @@ struct SignupScreenView: View {
     @State private var isConfirmPasswordVisible: Bool = false
     
     // Validation states
-    @State private var nameError: String? = nil
+    @State private var firstNameError: String? = nil
+    @State private var lastNameError: String? = nil
     @State private var emailError: String? = nil
     @State private var passwordError: String? = nil
     @State private var confirmPasswordError: String? = nil
     @State private var showAuthError: Bool = false
     @State private var authErrorMessage: String = ""
     @State private var isLoading: Bool = false
+    @State private var showCodeEntrySheet: Bool = false
+    @State private var emailForConfirmation: String = ""
     
     // Computed properties for validation
-    private var isNameValid: Bool {
-        return name.count >= 2
+    private var isFirstNameValid: Bool {
+        return firstName.count >= 2
+    }
+    
+    private var isLastNameValid: Bool {
+        return lastName.count >= 2
     }
     
     private var isEmailValid: Bool {
@@ -39,7 +49,10 @@ struct SignupScreenView: View {
     }
     
     private var isPasswordValid: Bool {
-        return password.count >= 6
+        return password.count >= 8 &&
+           password.rangeOfCharacter(from: .lowercaseLetters) != nil &&
+           password.rangeOfCharacter(from: .uppercaseLetters) != nil &&
+           password.rangeOfCharacter(from: .decimalDigits) != nil
     }
     
     private var isConfirmPasswordValid: Bool {
@@ -47,7 +60,7 @@ struct SignupScreenView: View {
     }
     
     private var isFormValid: Bool {
-        return isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid
+        return isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid
     }
     
     var body: some View {
@@ -55,6 +68,23 @@ struct SignupScreenView: View {
             ZStack {
                 // Background color
                 brandBlack.ignoresSafeArea(.all)
+                
+                // Show Code Entry Sheet when needed
+                .sheet(isPresented: $showCodeEntrySheet) {
+                    CodeEntrySheet(
+                        email: emailForConfirmation,
+                        onComplete: {
+                            // When verification is complete, dismiss the sheet and go to onboarding
+                            showCodeEntrySheet = false
+                            AppCoordinator.shared.switchToOnboardingFlow()
+                        },
+                        onDismiss: {
+                            // Just dismiss the sheet if the user cancels
+                            showCodeEntrySheet = false
+                        }
+                    )
+                    .preferredColorScheme(.dark)
+                }
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -66,36 +96,82 @@ struct SignupScreenView: View {
                             .padding(.bottom, 30)
                             .padding(.top, 20)
                         
-                        // Name Field
+                        // First Name Field
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Name")
+                            Text("First Name")
                                 .font(.custom("Magistral", size: 14))
                                 .foregroundColor(.white)
                             
-                            TextField("", text: $name)
+                            TextField("", text: $firstName)
                                 .font(.custom("Magistral", size: 14))
                                 .foregroundColor(.white)
                                 .padding()
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.words)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(nameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                        .stroke(firstNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
                                 )
-                                .onChange(of: name) { _ in 
-                                    validateName()
-                                }
-                                .placeholder(when: name.isEmpty) {
-                                    Text("Enter Your Name")
+                                .placeholder(when: firstName.isEmpty) {
+                                    Text("Enter Your First Name")
                                         .font(.custom("Magistral", size: 14))
                                         .foregroundColor(.gray)
                                         .padding(.leading, 16)
                                 }
+                                .onChange(of: firstName) { _ in
+                                    validateFirstName()
+                                }
+                            
                         }
                         .padding(.bottom, 6)
                         
-                        // Display name error if exists
-                        if let error = nameError {
+                        // Display first name error if exists
+                        if let error = firstNameError {
+                            Text(error)
+                                .font(.custom("Magistral", size: 12))
+                                .foregroundColor(errorRed)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                        } else {
+                            Spacer().frame(height: 10)
+                        }
+                        
+                        
+                        // Last Name Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Last Name")
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                            
+                            TextField("", text: $lastName)
+                                .font(.custom("Magistral", size: 14))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.words)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(lastNameError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
+                                )
+                                .placeholder(when: lastName.isEmpty) {
+                                    Text("Enter Your Last Name")
+                                        .font(.custom("Magistral", size: 14))
+                                        .foregroundColor(.gray)
+                                        .padding(.leading, 16)
+                                }
+                                .onChange(of: lastName) { _ in
+                                    validateLastName()
+                                }
+                            
+                        }
+                        .padding(.bottom, 6)
+                        
+                        // Display last name error if exists
+                        if let error = lastNameError {
                             Text(error)
                                 .font(.custom("Magistral", size: 12))
                                 .foregroundColor(errorRed)
@@ -118,6 +194,8 @@ struct SignupScreenView: View {
                                 .background(Color.white.opacity(0.1))
                                 .cornerRadius(8)
                                 .keyboardType(.emailAddress)
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.never)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
                                         .stroke(emailError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -159,6 +237,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -180,6 +260,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(passwordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -233,6 +315,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -253,6 +337,8 @@ struct SignupScreenView: View {
                                         .padding()
                                         .background(Color.white.opacity(0.1))
                                         .cornerRadius(8)
+                                        .autocorrectionDisabled(true)
+                                        .textInputAutocapitalization(.never)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(confirmPasswordError == nil ? Color.gray.opacity(0.3) : errorRed, lineWidth: 1)
@@ -400,28 +486,6 @@ struct SignupScreenView: View {
                                         .stroke(Color.white, lineWidth: 1)
                                 )
                             }
-                            
-                            // LinkedIn
-                            Button(action: {
-                                // LinkedIn signup action
-                            }) {
-                                HStack {
-                                    Image("logos_linkedin-icon")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 20, height: 20)
-                                    
-                                    Text("Continue with LinkedIn")
-                                        .font(.custom("Magistral", size: 14))
-                                        .foregroundColor(.white)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.white, lineWidth: 1)
-                                )
-                            }
                         }
                         .padding(.bottom, 40)
                     }
@@ -445,13 +509,29 @@ struct SignupScreenView: View {
     
     // MARK: - Validation Methods
     
-    private func validateName() {
-        if name.isEmpty {
-            nameError = nil
-        } else if !isNameValid {
-            nameError = "Name must be at least 2 characters"
+    private func validateFirstName() {
+        if firstName.isEmpty {
+            firstNameError = nil
+            return
+        }
+        
+        if firstName.count < 2 {
+            firstNameError = "First name must be at least 2 characters"
         } else {
-            nameError = nil
+            firstNameError = nil
+        }
+    }
+    
+    private func validateLastName() {
+        if lastName.isEmpty {
+            lastNameError = nil
+            return
+        }
+        
+        if lastName.count < 2 {
+            lastNameError = "Last name must be at least 2 characters"
+        } else {
+            lastNameError = nil
         }
     }
     
@@ -469,7 +549,7 @@ struct SignupScreenView: View {
         if password.isEmpty {
             passwordError = nil
         } else if !isPasswordValid {
-            passwordError = "Password must be at least 6 characters"
+            passwordError = "Password must be at least 8 characters and include upper-case, lower-case, and a number"
         } else {
             passwordError = nil
         }
@@ -487,14 +567,19 @@ struct SignupScreenView: View {
     
     private func validateForm() -> Bool {
         // Force validation of all fields
-        validateName()
+        validateFirstName()
+        validateLastName()
         validateEmail()
         validatePassword()
         validateConfirmPassword()
         
         // Check if fields are not empty
-        if name.isEmpty {
-            nameError = "Name is required"
+        if firstName.isEmpty {
+            firstNameError = "First name is required"
+        }
+        
+        if lastName.isEmpty {
+            lastNameError = "Last name is required"
         }
         
         if email.isEmpty {
@@ -509,7 +594,7 @@ struct SignupScreenView: View {
             confirmPasswordError = "Please confirm your password"
         }
         
-        return isFormValid && !name.isEmpty && !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
+        return isFormValid && !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
     }
     
     // MARK: - Authentication Methods
@@ -525,38 +610,65 @@ struct SignupScreenView: View {
         // Get access to UserSession
         let userSession = UserSession.shared
         
-        // Simulate network delay - in a real app, this would be an API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // This is where you would implement actual signup logic
-            // For now, we'll simulate a successful signup for the demo
-            
-            if email.lowercased() == "taken@example.com" {
-                // Simulate an authentication error
-                showAuthError = true
-                authErrorMessage = "This email is already registered. Please use a different email or login."
-                isLoading = false
-            } else {
-                // Create a new user object
-                let userId = UUID().uuidString
+        // Register the user with AWS Cognito via UserSession
+        let fullName = "\(firstName) \(lastName)"
+        userSession.registerUser(email: email, password: password, name: fullName) { result in
+            DispatchQueue.main.async {
+                self.isLoading = false
                 
-                // Register the user with UserSession
-                userSession.registerUser(email: email, password: password) { result in
-                    DispatchQueue.main.async {
-                        switch result {
-                        case .success(let user):
-                            // User successfully registered and stored in UserSession
-                            print("User registered: \(user.id)")
+                switch result {
+                case .success(let user):
+                    // User successfully registered and stored in UserSession
+                    print("✅ User registered: \(user.id)")
+                    
+                    // Success case - proceed to onboarding flow
+                    AppCoordinator.shared.switchToOnboardingFlow()
+                    
+                case .failure(let error):
+                    // Handle specific registration errors
+                    self.showAuthError = true
+                    
+                    if let sessionError = error as? SessionError {
+                        switch sessionError {
+                        case .confirmationRequired:
+                            // Store email for confirmation
+                            self.emailForConfirmation = self.email
+                            // Show the code entry sheet instead of error message
+                            self.showCodeEntrySheet = true
+                            self.showAuthError = false
                             
-                            // Success case - proceed to onboarding flow
-                            self.isLoading = false
-                            AppCoordinator.shared.switchToOnboardingFlow()
+                        case .userAlreadyExists:
+                            self.authErrorMessage = "This email is already registered. Please use a different email or login."
                             
-                        case .failure(let error):
-                            // Handle registration error
-                            self.showAuthError = true
+                        default:
                             self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
-                            self.isLoading = false
                         }
+                    } else if let amplifyError = error as? AuthError {
+                        switch amplifyError {
+                        
+                        // ➊ high-level category
+                        case .service(_, _, let underlyingError):
+                            if let cognito = underlyingError as? AWSCognitoAuthError {
+                                // ➋ fine-grained Cognito reason
+                                switch cognito {
+                                case .userNotConfirmed:
+                                    self.authErrorMessage = "Please check your email for a verification code to complete signup."
+                                
+                                case .usernameExists:
+                                    self.authErrorMessage = "This email is already registered. Please use a different email or login."
+                                
+                                default:
+                                    self.authErrorMessage = "Registration failed: \(cognito.errorDescription)"
+                                }
+                            } else {
+                                self.authErrorMessage = "Registration failed: \(amplifyError.errorDescription)"
+                            }
+                        
+                        default:
+                            self.authErrorMessage = "Registration failed: \(amplifyError.errorDescription)"
+                        }
+                    } else {
+                        self.authErrorMessage = "Registration failed: \(error.localizedDescription)"
                     }
                 }
             }

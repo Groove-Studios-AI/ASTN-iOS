@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 // MARK: - Workout Model
 struct WorkoutItem: Identifiable {
@@ -265,8 +266,8 @@ struct WorkoutsTabView: View {
     @State private var showingRules = false
     @State private var selectedWorkout: WorkoutItem? = nil
     
-    // Use the shared app state instead of local state
-    @ObservedObject private var appState = AppState.shared
+    // Access app state via environment object
+    @EnvironmentObject var appState: AppState
     
     private let workouts = [
         WorkoutItem(

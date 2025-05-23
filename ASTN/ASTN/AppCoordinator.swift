@@ -1,5 +1,16 @@
 import SwiftUI
 import UIKit
+import Combine
+
+// Extension to apply all required environment objects to any view
+extension View {
+    /// Apply all shared environment objects required by the app
+    func withSharedEnvironment() -> some View {
+        self
+            .environmentObject(AppState.shared)
+            .preferredColorScheme(.dark)
+    }
+}
 
 // Coordinator to manage app-level navigation
 class AppCoordinator {
@@ -10,39 +21,37 @@ class AppCoordinator {
     // Switch from splash screen to welcome screen
     func switchToWelcomeScreen() {
         print("AppCoordinator: Switching to welcome screen")
-        let welcomeView = WelcomeScreenView()
-        let hostingController = UIHostingController(rootView: welcomeView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let welcomeView = WelcomeScreenView().withSharedEnvironment()
         
-        // Ensure we're on the main thread when setting the root view controller
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(welcomeView)
     }
     
     // Switch to login screen
     func switchToAuthFlow() {
         print("AppCoordinator: Switching to login screen")
-        let loginView = LoginScreenView()
-        let hostingController = UIHostingController(rootView: loginView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let loginView = LoginScreenView().withSharedEnvironment()
         
-        // Ensure we're on the main thread when setting the root view controller
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(loginView)
+    }
+    
+    // Specific method for logout - Switch to login screen
+    func switchToLoginFlow() {
+        print("AppCoordinator: Switching to login screen after logout")
+        // Use the shared environment modifier
+        let loginView = LoginScreenView().withSharedEnvironment()
+        
+        presentView(loginView)
     }
     
     // Switch to onboarding flow after signup
     func switchToOnboardingFlow() {
         print("AppCoordinator: Switching to onboarding flow")
-        let onboardingView = OnboardingView()
-        let hostingController = UIHostingController(rootView: onboardingView)
-        hostingController.modalPresentationStyle = .fullScreen
+        // Use the shared environment modifier
+        let onboardingView = OnboardingView().withSharedEnvironment()
         
-        DispatchQueue.main.async { [weak self] in
-            self?.setRootViewController(hostingController)
-        }
+        presentView(onboardingView)
     }
     
     // Handle forgot password flow
@@ -55,16 +64,27 @@ class AppCoordinator {
     // Switch to the main tab controller, replacing entire navigation stack
     func switchToMainInterface() {
         print("AppCoordinator: Switching to main interface")
-        let mainTabView = MainTabView()
-        let hostingController = UIHostingController(rootView: mainTabView)
+        // Use the shared environment modifier
+        let mainTabView = MainTabView().withSharedEnvironment()
+        
+        presentView(mainTabView)
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// A generic method to present any SwiftUI view as the root view controller with proper environment
+    private func presentView<Content: View>(_ content: Content) {
+        let hostingController = UIHostingController(rootView: content)
         hostingController.modalPresentationStyle = .fullScreen
         
+        // Apply dark theme to the hosting controller view
+        hostingController.view.backgroundColor = .black
+        
+        // Ensure we're on the main thread when setting the root view controller
         DispatchQueue.main.async { [weak self] in
             self?.setRootViewController(hostingController)
         }
     }
-    
-    // MARK: - Helper Methods
     
     // Helper method to set the root view controller with animation
     private func setRootViewController(_ viewController: UIViewController) {

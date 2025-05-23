@@ -4,6 +4,7 @@ struct WelcomeHeaderView: View {
     let username: String
     let greeting: String
     let points: Int
+    let onPointsTapped: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
@@ -27,22 +28,24 @@ struct WelcomeHeaderView: View {
             
             Spacer()
             
-            // Points counter
-            HStack(spacing: 6) {
-                Text("\(points)")
-                    .font(.custom("Magistral", size: 18).bold())
-                    .foregroundColor(.white)
-                
-                Image(systemName: "flame.fill")
-                    .foregroundColor(.orange)
-                    .font(.system(size: 18))
+            // Points counter - now tappable
+            Button(action: onPointsTapped) {
+                HStack(spacing: 6) {
+                    Text("\(points)")
+                        .font(.custom("Magistral", size: 18).bold())
+                        .foregroundColor(.white)
+                    
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 18))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.orange.opacity(0.2))
+                )
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.orange.opacity(0.2))
-            )
         }
         .padding(.vertical, 8)
     }
