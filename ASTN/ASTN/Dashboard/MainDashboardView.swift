@@ -13,7 +13,8 @@ struct MainDashboardView: View {
                 WelcomeHeaderView(
                     username: viewModel.username,
                     greeting: viewModel.greeting,
-                    points: viewModel.points
+                    points: viewModel.points,
+                    onPointsTapped: viewModel.showPointsSystemModal
                 )
                 .padding(.horizontal)
                 .padding(.top, 16)
@@ -93,6 +94,9 @@ struct MainDashboardView: View {
             ZStack {
                 if viewModel.showComingSoonModal {
                     OwnershipModal(isPresented: $viewModel.showComingSoonModal)
+                }
+                if viewModel.showPointsModal {
+                    PointsSystemModal(isPresented: $viewModel.showPointsModal)
                 }
             }
         )
