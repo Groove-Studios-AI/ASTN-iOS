@@ -13,7 +13,8 @@ struct MainDashboardView: View {
                 WelcomeHeaderView(
                     username: viewModel.username,
                     greeting: viewModel.greeting,
-                    points: viewModel.points
+                    points: viewModel.points,
+                    onPointsTapped: viewModel.showPointsSystemModal
                 )
                 .padding(.horizontal)
                 .padding(.top, 16)
@@ -39,12 +40,18 @@ struct MainDashboardView: View {
                     .animation(.easeInOut, value: viewModel.showDailyChallenge)
                 }
                 
-                // Today's workout paths (wealth/brand)
-                WorkoutPathView(
-                    onWealthSelected: viewModel.navigateToWealthWorkout,
-                    onBrandSelected: viewModel.navigateToBrandWorkout
+                // REMOVED: Today's workout paths (wealth/brand)
+                // WorkoutPathView(
+                //     onWealthSelected: viewModel.navigateToWealthWorkout,
+                //     onBrandSelected: viewModel.navigateToBrandWorkout
+                // )
+                // .padding(.horizontal)
+                
+                // Featured workouts - replaces Today's Wealth Workout row
+                FeaturedGamesListView(
+                    games: viewModel.featuredGames,
+                    onGameSelected: viewModel.selectFeaturedGame
                 )
-                .padding(.horizontal)
                 
                 // Performance tracking preview
                 PerformancePreviewView(
@@ -59,17 +66,17 @@ struct MainDashboardView: View {
                 )
                 .padding(.horizontal)
                 
-                // Featured games horizontal scrolling list
-                FeaturedGamesListView(
-                    games: viewModel.featuredGames,
-                    onGameSelected: viewModel.selectFeaturedGame
-                )
+                // REMOVED: Featured games horizontal scrolling list (moved above)
+                // FeaturedGamesListView(
+                //     games: viewModel.featuredGames,
+                //     onGameSelected: viewModel.selectFeaturedGame
+                // )
                 
-                // Latest articles section with horizontal scrolling
-                ArticlesListView(articles: viewModel.articles)
+                // REMOVED: Latest articles section with horizontal scrolling
+                // ArticlesListView(articles: viewModel.articles)
                 
-                // Featured videos section with horizontal scrolling
-                VideosListView(videos: viewModel.videos)
+                // REMOVED: Featured videos section with horizontal scrolling
+                // VideosListView(videos: viewModel.videos)
                 
                 // Ownership opportunities section
                 OwnershipView(onTap: {
@@ -87,6 +94,9 @@ struct MainDashboardView: View {
             ZStack {
                 if viewModel.showComingSoonModal {
                     OwnershipModal(isPresented: $viewModel.showComingSoonModal)
+                }
+                if viewModel.showPointsModal {
+                    PointsSystemModal(isPresented: $viewModel.showPointsModal)
                 }
             }
         )

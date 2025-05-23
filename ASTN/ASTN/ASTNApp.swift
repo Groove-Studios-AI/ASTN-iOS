@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import UIKit
+import Amplify
 
 @main
 struct ASTNApp: App {
@@ -15,6 +16,9 @@ struct ASTNApp: App {
     @StateObject private var appState = AppState.shared
     
     init() {
+        // Initialize AWS Amplify
+        AmplifyConfigAsync.configure()
+        
         // Configure navigation bar appearance to prevent color changes during scrolling
         configureNavigationBarAppearance()
         

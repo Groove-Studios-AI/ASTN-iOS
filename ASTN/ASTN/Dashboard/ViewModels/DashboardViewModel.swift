@@ -13,6 +13,7 @@ class DashboardViewModel: ObservableObject {
     @Published var isPerformanceTrackingOptedIn: Bool = false
     @Published var isOwnershipExpanded: Bool = false
     @Published var showComingSoonModal: Bool = false
+    @Published var showPointsModal: Bool = false
     
     // Daily Challenge Properties
     @Published var showDailyChallenge: Bool = true
@@ -196,6 +197,14 @@ class DashboardViewModel: ObservableObject {
         print("Showing ownership opportunities coming soon modal")
         withAnimation {
             showComingSoonModal = true
+        }
+    }
+    
+    func showPointsSystemModal() {
+        // Show the points system modal
+        print("Showing points system modal")
+        withAnimation {
+            showPointsModal = true
         }
     }
     
